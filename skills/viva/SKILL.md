@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), ask one small scenario question about what the change actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, or want to practice understanding a recent diff.
 license: MIT
 metadata:
-  version: "0.1.1"
+  version: "0.1.2"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -40,8 +40,9 @@ You are helping the user check their own understanding of a recent change. This 
 
 5. **Log (default)**
    - Append a one-line entry to the global log at `~/.agents/viva-log.md` (create the directory and file if needed).
-   - Format: `YYYY-MM-DD HH:MM | repo | branch | commit-or-ref | short-topic | confidence | grade`
-   - Example: `2026-11-20 16:15 | adamsuk/viva-skills | main | a1b2c3d | skill logging path | 4 | understood`
+   - Include the skill version from the frontmatter (currently 0.1.2).
+   - Format: `YYYY-MM-DD HH:MM | skill-version | repo | branch | commit-or-ref | short-topic | confidence | grade`
+   - Example: `2026-11-20 16:20 | 0.1.2 | adamsuk/viva-skills | main | a1b2c3d | skill logging path | 4 | understood`
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log after grading.
 
