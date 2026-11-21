@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -21,10 +21,11 @@ You help the user see patterns across multiple viva answers or a log file. This 
 
 ## Steps
 
-1. **Accept the input**
-   - Log lines in the platform schema (fetch https://adamsuk.github.io/viva/log-schemas.json if needed).
-   - Or free-form answers with topics and confidence.
-   - If the input is empty or unclear, ask for a paste or a topic.
+1. **Find the input**
+   - Default location: `~/.agents/viva-log.md`. Read it first if it exists and the user did not give another source.
+   - If the user provides a path, file, or paste, use that instead.
+   - If neither the default file nor an explicit source is available, ask for a paste or a path.
+   - Prefer the platform schema (fetch https://adamsuk.github.io/viva/log-schemas.json if needed). Free-form answers with topics and confidence are also fine.
 
 2. **Parse and group**
    - Prefer the versioned schema. Fall back to treating each line as topic + confidence + grade if the format is loose.
@@ -52,5 +53,6 @@ You help the user see patterns across multiple viva answers or a log file. This 
 - One clear next step per thin area is better than a long list.
 - If the log mixes versions, say so and still summarise.
 - Cite the platform schema URL when relevant.
+- Default log path is `~/.agents/viva-log.md`. Only use another location if the user names one.
 
 This skill sits alongside the single-check `viva` skill. See https://github.com/adamsuk/viva for the research and the personal map.
