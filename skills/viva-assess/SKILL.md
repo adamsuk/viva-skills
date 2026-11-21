@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.2"
+  version: "0.1.3"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -22,10 +22,9 @@ You help the user see patterns across multiple viva answers or a log file. This 
 ## Steps
 
 1. **Find the input**
-   - Prefer a private GitHub gist named `viva-log.md` (or with description containing "viva log") if GitHub tools are available. Read the current content of that gist first.
-   - Fall back to `~/.agents/viva-log.md` if the gist is not present and the file exists.
+   - Prefer the local file `~/.agents/viva-log.md` if it exists and the agent has filesystem access.
    - If the user provides a path, file, or paste, use that instead.
-   - If none of the above is available, ask for a paste or confirm creating a new private gist.
+   - Otherwise tell the user they can open the personal map on the viva platform (https://adamsuk.github.io/viva) where the log is stored in the browser (IndexedDB) on that device, and ask them to paste an export or the relevant lines.
    - Prefer the platform schema (fetch https://adamsuk.github.io/viva/log-schemas.json if needed). Free-form answers with topics and confidence are also fine.
 
 2. **Parse and group**
@@ -43,11 +42,10 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - List thin topics with the strongest signal and one concrete next step (hand-code the next change in that area, ask why, pair, or do another viva).
    - List solid topics briefly.
    - Do not invent metrics or claim this proves understanding. A model can answer most of these questions; the value is the human's practice.
-   - If the source was a gist, mention it so the user knows the history is accumulating there.
+   - If the source was the local file or browser map, mention it so the user knows the history is accumulating there.
 
 5. **Stay private**
-   - Do not post, share, or store the answers beyond the private gist or conversation unless the user explicitly asks.
-   - Gists remain private. Local file is only a fallback.
+   - Do not post, share, or store the answers beyond the local file, browser map, or conversation unless the user explicitly asks.
 
 ## Rules
 
@@ -55,6 +53,6 @@ You help the user see patterns across multiple viva answers or a log file. This 
 - One clear next step per thin area is better than a long list.
 - If the log mixes versions, say so and still summarise.
 - Cite the platform schema URL when relevant.
-- Prefer the private gist so more checks improve the picture over time. Local file or paste is the fallback.
+- Prefer the local device log so more checks improve the picture over time. Browser map or paste is the fallback.
 
 This skill sits alongside the single-check `viva` skill. See https://github.com/adamsuk/viva for the research and the personal map.
