@@ -7,6 +7,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
 ## Skills
 
 - **viva** — One small scenario question about your recent change (or a pointed-to diff/commit), with a confidence rating. Practice, not a gate.
+- **viva-assess** — Interpret and assess multiple answers or a log excerpt. Flags confident-wrong cases, thin topics, and suggests next practice steps.
 
 ## Installation
 
@@ -14,6 +15,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
 
 ```bash
 npx skills add adamsuk/viva-skills --skill viva
+npx skills add adamsuk/viva-skills --skill viva-assess
 ```
 
 Add `--global` / `-g` for user-level install, or run from a project root for project-level.
@@ -27,18 +29,22 @@ npx skills add adamsuk/viva-skills --skill viva --agent claude-code --agent code
 
 ### Manual / agent-specific
 
-Clone or download the `skills/viva` folder and place it in the agent's skills directory:
+Clone or download the skill folder and place it in the agent's skills directory:
 
 | Agent | Personal | Project |
 |-------|----------|---------|
-| Claude Code | `~/.claude/skills/viva/` | `.claude/skills/viva/` |
-| Grok | `~/.grok/skills/viva/` or `~/.agents/skills/viva/` or `~/.claude/skills/viva/` | `.grok/skills/viva/` or `.claude/skills/viva/` |
-| Codex | `~/.agents/skills/viva/` | `.agents/skills/viva/` |
-| Cursor | `~/.agents/skills/viva/` or `~/.cursor/skills/viva/` | `.agents/skills/viva/` |
+| Claude Code | `~/.claude/skills/<skill>/` | `.claude/skills/<skill>/` |
+| Grok | `~/.grok/skills/<skill>/` or `~/.agents/skills/<skill>/` or `~/.claude/skills/<skill>/` | `.grok/skills/<skill>/` or `.claude/skills/<skill>/` |
+| Codex | `~/.agents/skills/<skill>/` | `.agents/skills/<skill>/` |
+| Cursor | `~/.agents/skills/<skill>/` or `~/.cursor/skills/<skill>/` | `.agents/skills/<skill>/` |
 
 Grok also reads Claude Code skills with no extra setup.
 
-After placing the folder, start a new agent session. Invoke with `/viva` or a matching phrase ("check my last commit", "viva this change").
+After placing the folder, start a new agent session. Invoke with `/viva`, `/viva-assess`, or a matching phrase.
+
+### MCP
+
+These skills can be served over MCP using the Skills extension (SEP-2640) or a host such as [Skills Over MCP](https://skillsovermcp.com/). Point an MCP client at a server that exposes this repo's `skills/` directory. The platform site lists the same install commands and a stable schema URL.
 
 ### Versioning
 
@@ -55,11 +61,17 @@ After install:
 /viva
 # or
 Check my understanding of the last commit
+
+/viva-assess
+# or
+Review these viva answers / this log
 ```
 
-The skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. Optional local log.
+The single-check skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. Optional local log.
 
-See the [Viva research](https://github.com/adamsuk/viva) for the evidence behind the approach and the full process model.
+The assess skill summarises a set of answers or a log excerpt and suggests next steps.
+
+See the [Viva research](https://github.com/adamsuk/viva) for the evidence behind the approach and the full process model. The personal map on the site is the local viewer for the log.
 
 ## Contributing
 
