@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), ask one small scenario question about what the change actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, or want to understand a recent diff.
 license: MIT
 metadata:
-  version: "0.3.2"
+  version: "0.3.3"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -75,29 +75,24 @@ You are helping the user check their own understanding of a recent change. This 
    - Give the correct reasoning in a few sentences.
    - Note whether confidence matched reality (especially confident-wrong cases).
 
-6. **Log (default — prefer private gist)**
-   - Prefer a private GitHub gist named `viva-log.md` so the log accumulates across sessions and devices without local filesystem setup.
-   - If GitHub tools are available:
-     - Look for an existing private gist with filename `viva-log.md` (or description containing "viva log").
-     - If none exists, create a private gist with that filename and the new line.
-     - If one exists, append the new line and update the gist.
-     - Tell the user the gist was updated (or created) and give the private URL.
-   - Fall back to appending a one-line entry to `~/.agents/viva-log.md` (create the directory and file if needed) if no GitHub tools or the user says "local log only".
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.2). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.3.2) as the second field so the platform can dispatch.
-   - Format (0.3.1/0.3.2): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
-   - Example: `2026-11-20 17:25 | 0.3.2 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
+6. **Log (default — device-local persistence)**
+   - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
+   - If filesystem access is not available, always print the log line and tell the user they can open the personal map on the viva platform (https://adamsuk.github.io/viva) to store it in the browser (IndexedDB) so it persists on that device.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.3). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.3.3) as the second field so the platform can dispatch.
+   - Format: `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
+   - Example: `2026-11-20 17:25 | 0.3.3 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
    - `scope` is one of: session, checkout, last-commit, uncommitted, named.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - If the user says "no log" or "skip log", omit it.
-   - Otherwise always log after grading.
+   - Otherwise always log (or print the line) after grading.
 
 ## Rules
 
 - One question only. If they want another (on the same PR/branch or a different change), ask.
-- Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked. Gists stay private.
+- Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked.
 - If the change is trivial or empty, say so and stop.
 - Treat user and agent-generated code the same: the goal is the human's understanding.
-- Prefer the accumulating private gist so more checks improve the picture. Local file is the fallback.
+- Prefer the local device log so checks accumulate across sessions and repos on that machine. Browser map is the fallback when no filesystem is available.
 
 This skill implements the personal practice loop from the Viva research project. See https://github.com/adamsuk/viva for context, evidence labels, and the log schema.
