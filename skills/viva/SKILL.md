@@ -77,8 +77,9 @@ You are helping the user check their own understanding of a recent change. This 
 
 6. **Log (default)**
    - Append a one-line entry to the global log at `~/.agents/viva-log.md` (create the directory and file if needed).
-   - Include the skill version from the frontmatter (currently 0.3.1).
-   - Format: `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.1). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.3.1) as the second field so the platform can dispatch.
+   - Format (0.3.1): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
    - Example: `2026-11-20 17:25 | 0.3.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
    - `scope` is one of: session, checkout, last-commit, uncommitted, named.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
@@ -93,4 +94,4 @@ You are helping the user check their own understanding of a recent change. This 
 - Treat user and agent-generated code the same: the goal is the human's understanding.
 - The log lives in the user's home under `.agents/` so a single file can be reviewed or moved later.
 
-This skill implements the personal practice loop from the Viva research project. See https://github.com/adamsuk/viva for context and evidence labels.
+This skill implements the personal practice loop from the Viva research project. See https://github.com/adamsuk/viva for context, evidence labels, and the log schema.
