@@ -67,9 +67,9 @@ Check my understanding of the last commit
 Review these viva answers / this log
 ```
 
-The single-check skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. Optional local log.
+The single-check skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. By default it appends the line to a private GitHub gist named `viva-log.md` so the history accumulates across sessions and devices (local `~/.agents/viva-log.md` is the fallback if GitHub is unavailable or you say "local log only").
 
-The assess skill summarises a set of answers or a log excerpt and suggests next steps.
+The assess skill summarises a set of answers or a log excerpt and suggests next steps. It prefers reading the same private gist first.
 
 See the [Viva research](https://github.com/adamsuk/viva) for the evidence behind the approach and the full process model. The personal map on the site is the local viewer for the log.
 
