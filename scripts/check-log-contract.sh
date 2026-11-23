@@ -9,7 +9,7 @@
 #   tests pass a fixture.
 #
 # Exit 0 when every example line passes, 1 with one "file:line: problem" per
-# failure, 2 on bad usage or an unreadable schemas file. Bash and Python 3 only.
+# failure (or when no example line is found at all), 2 on bad usage or an unreadable schemas file. Bash and Python 3 only.
 set -euo pipefail
 
 [[ $# -ge 1 && $# -le 2 ]] || { echo "usage: scripts/check-log-contract.sh <log-schemas.json> [skills-dir]" >&2; exit 2; }
@@ -34,7 +34,8 @@ except (ValueError, KeyError, TypeError) as e:
     print(f"{schemas_path}: not a log-schemas file ({e})", file=sys.stderr)
     sys.exit(2)
 
-LINE = re.compile(r"`(\d{4}-\d\d-\d\d \d\d:\d\d \| [^`]*)`")
+# An example log line anywhere in the text, inline code or not: up to a closing backtick or line end.
+LINE = re.compile(r"\b(\d{4}-\d\d-\d\d \d\d:\d\d \| [^`\n]*)")
 
 
 def covers(pattern, version):
@@ -59,7 +60,7 @@ for path in sorted(root.glob("*/SKILL.md")):
     for n, text in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
         for m in LINE.finditer(text):
             checked += 1
-            parts = [p.strip() for p in m[1].split(" | ")]
+            parts = [p.strip() for p in m[1].rstrip().split(" | ")]
             version = parts[1]
             schema = schema_for(version)
             if schema is None:
@@ -68,6 +69,11 @@ for path in sorted(root.glob("*/SKILL.md")):
                 problems.append(
                     f"{path}:{n}: {len(parts)} fields, schema {schema['version']} has {len(schema['fields'])}"
                 )
+
+if checked == 0:
+    # Finding nothing must fail: otherwise moving or reformatting the examples
+    # would silently switch the contract check off.
+    problems.append(f"{root}: no example log lines found in */SKILL.md")
 
 for p in problems:
     print(p)
