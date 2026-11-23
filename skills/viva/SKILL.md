@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), ask one small scenario question about what the change actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, or want to understand a recent diff.
 license: MIT
 metadata:
-  version: "0.3.4"
+  version: "0.3.5"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -81,14 +81,22 @@ You are helping the user check their own understanding of a recent change. This 
    - Show the key lines that decide the outcome.
    - Give the correct reasoning in a few sentences.
    - Note whether confidence matched reality (especially confident-wrong cases).
+   - End the reveal with one line: "If the question itself was wrong or unfair, say 'dispute' and why."
+
+5a. **Dispute (only if the user disputes)**
+   - Model-written questions about code are not reliably correct, so a dispute is taken seriously, not argued away.
+   - Re-check the question's premise and the expected answer against the code at the target ref (read it again; re-run any experiment). Do not rely on what you said in the question or the reveal.
+   - Say plainly whether the dispute stands: the premise was wrong, the question was ambiguous, or the expected answer was wrong. Own it.
+   - If it stands, the grade becomes `disputed` and the original grade is not logged. If it does not, explain why with file:line, keep the grade, and say the user can still log it as disputed by saying so (their call; it is their log).
 
 6. **Log (default — device-local persistence)**
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.4). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.3.4) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.5). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.3.5) as the second field so the platform can dispatch.
    - Format: `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
-   - Example: `2026-11-20 17:25 | 0.3.4 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
+   - Example: `2026-11-20 17:25 | 0.3.5 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
+   - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - If the user says "no log" or "skip log", omit it.

@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.6"
+  version: "0.1.7"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -32,13 +32,15 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Group by topic. Note skill versions if present.
 
 3. **Assess**
+   - Leave `disputed` checks out of every signal below: the question was faulty, not the user.
    - Flag confident-wrong (high confidence + missed/partial that is clearly wrong).
    - Identify thin topics: repeated partial/miss, or single high-confidence miss.
    - Note solid areas (recent understood with matching or lower confidence).
    - Separate mechanism / observed / hazard claims when the original questions did.
 
 4. **Report**
-   - Short summary: N checks, M topics, K thin.
+   - Short summary: N checks, M topics, K thin (and D disputed, if any).
+   - If there are disputed checks, list them on one line as a question-quality note (several in one topic suggest the questions there need work), never as a gap.
    - List thin topics with the strongest signal and one concrete next step (hand-code the next change in that area, ask why, pair, or do another viva).
    - List solid topics briefly.
    - Do not invent metrics or claim this proves understanding. A model can answer most of these questions; the value is the human's practice.
