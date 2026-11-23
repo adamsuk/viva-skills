@@ -30,8 +30,8 @@ try:
     schemas = data["schemas"]
     if not all(isinstance(s["version"], str) and isinstance(s["fields"], list) for s in schemas):
         raise TypeError("each schema needs a version string and a fields list")
-except (ValueError, KeyError, TypeError) as e:
-    print(f"{schemas_path}: not a log-schemas file ({e})", file=sys.stderr)
+except (OSError, ValueError, KeyError, TypeError) as e:
+    print(f"{schemas_path}: cannot read as a log-schemas file ({e})", file=sys.stderr)
     sys.exit(2)
 
 # An example log line anywhere in the text, inline code or not: up to a closing backtick or line end.
@@ -60,7 +60,8 @@ for path in sorted(root.glob("*/SKILL.md")):
     for n, text in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
         for m in LINE.finditer(text):
             checked += 1
-            parts = [p.strip() for p in m[1].rstrip().split(" | ")]
+            # Split first, then strip each field, so a trailing empty field still counts.
+            parts = [p.strip() for p in m[1].split(" | ")]
             version = parts[1]
             schema = schema_for(version)
             if schema is None:
