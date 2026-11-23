@@ -73,6 +73,14 @@ d=$(case_dir logv); skill "$d" demo "$GOOD_FM" "${GOOD_BODY/| 1.2.3 |/| 1.2.0 |}
 run "$d"; [[ $status -eq 1 ]] || fail "exit $status"; grep -qF 'example log line uses 1.2.0' <<< "$out" || fail "$out"
 printf 'ok: %s\n' "$tname"
 
+tname="VERSION beside the skills dir must be X.Y.Z"
+d=$(case_dir rel); mkdir -p "$d/skills"; skill "$d/skills" demo "$GOOD_FM" "$GOOD_BODY"
+printf '0.4.1\n' > "$d/VERSION"
+run "$d/skills"; [[ $status -eq 0 ]] || fail "good VERSION: exit $status: $out"
+printf '0.4\n' > "$d/VERSION"
+run "$d/skills"; [[ $status -eq 1 ]] || fail "bad VERSION: exit $status"; grep -qF "VERSION: '0.4' is not X.Y.Z" <<< "$out" || fail "$out"
+printf 'ok: %s\n' "$tname"
+
 tname="no skills, bad usage"
 d=$(case_dir empty)
 run "$d"; [[ $status -eq 1 ]] || fail "empty dir: exit $status"
