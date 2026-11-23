@@ -111,6 +111,14 @@ status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
 [[ -x $r/.githooks/post-commit ]] || fail "not installed in .githooks"
 printf 'ok: %s\n' "$tname"
 
+tname="a .. after a symlink is resolved from the link's target, like mkdir -p"
+r=$(newrepo symdotdot); mkdir -p "$ROOT/outside/nested"; ln -s "$ROOT/outside/nested" "$r/link"
+(cd "$r" && git config core.hooksPath "$r/new/../link/../hooks")
+status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
+[[ $status -eq 1 ]] || fail "expected 1, got $status"
+[[ ! -e $ROOT/outside/hooks ]] || fail "wrote outside the repo through the symlink"
+printf 'ok: %s\n' "$tname"
+
 tname="hooksPath at the checkout's own hooks/ is already installed, never deleted"
 r=$(newrepo self); mkdir -p "$r/scripts" "$r/hooks"
 cp "$installer" "$r/scripts/"; cp "$here/../hooks/post-commit" "$r/hooks/"

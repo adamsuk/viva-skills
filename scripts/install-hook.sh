@@ -31,23 +31,22 @@ ours() { [[ -f $dest && ! -L $dest ]] && head -n 3 "$dest" | grep -qxF "# $marke
 
 # A global or shared core.hooksPath would put the hook in every repository using that
 # directory, not just this one. Refuse unless --force, and say where it would go.
-# Resolve a path without creating it: walk up to the nearest existing parent, resolve
-# that, then apply the missing part lexically (dirs that don't exist can't be symlinks).
-# If the missing part had . or .., resolve the result again, since it may now name an
-# existing directory or symlink.
+# Resolve a path without creating it, the way mkdir -p would walk it: one component at
+# a time, resolving each one that exists (symlinks included) before applying the next,
+# so a later .. steps out of the symlink's target, not its lexical parent. Components
+# that don't exist yet will be real directories, so they're appended as written.
 abs() {
-  local p=$1 tail="" base c dots=0
-  while [[ ! -d $p && $p != / && $p != . ]]; do tail="$(basename "$p")/$tail"; p=$(dirname "$p"); done
-  base=$(cd "$p" 2>/dev/null && pwd -P || printf '%s' "$p")
-  local IFS=/
-  for c in $tail; do
+  local p=$1 c base=/ parts
+  [[ $p == /* ]] || p="$PWD/$p"
+  IFS=/ read -ra parts <<< "$p"
+  for c in "${parts[@]}"; do
     case $c in
-      '' | .) dots=1 ;;
-      ..) dots=1; base=$(dirname "$base") ;;
-      *) base="${base%/}/$c" ;;
+      '' | .) ;;
+      ..) base=$(dirname "$base") ;;
+      *) base="${base%/}/$c"; [[ -d $base ]] && base=$(cd "$base" && pwd -P) ;;
     esac
   done
-  if [[ $dots -eq 1 ]]; then abs "$base"; else printf '%s' "$base"; fi
+  printf '%s' "$base"
 }
 # Inside this repository's git dir or its working tree (e.g. a repo-local .githooks) is fine.
 top=$(git rev-parse --show-toplevel 2>/dev/null || true)
