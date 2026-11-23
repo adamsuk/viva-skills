@@ -21,6 +21,7 @@ jobs:
       - run: bash scripts/test-validate-skills.sh
       - run: bash scripts/validate-skills.sh
       - run: bash scripts/test-check-log-contract.sh
+      - run: bash scripts/test-hook.sh
       # The platform owns the log format: every example log line in a SKILL.md must
       # parse against the live schemas, so the two repos can't drift apart unnoticed.
       - name: Check example log lines against the live log-schemas.json
