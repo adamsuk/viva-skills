@@ -31,7 +31,12 @@ ours() { [[ -f $dest && ! -L $dest ]] && head -n 3 "$dest" | grep -qxF "# $marke
 
 # A global or shared core.hooksPath would put the hook in every repository using that
 # directory, not just this one. Refuse unless --force, and say where it would go.
-abs() { (mkdir -p "$1" 2>/dev/null; cd "$1" 2>/dev/null && pwd -P) || printf '%s' "$1"; }
+# Resolve a path without creating it: walk up to the nearest existing parent.
+abs() {
+  local p=$1 tail=""
+  while [[ ! -d $p && $p != / && $p != . ]]; do tail="/$(basename "$p")$tail"; p=$(dirname "$p"); done
+  printf '%s%s' "$(cd "$p" 2>/dev/null && pwd -P || printf '%s' "$p")" "$tail"
+}
 # Inside this repository's git dir or its working tree (e.g. a repo-local .githooks) is fine.
 top=$(git rev-parse --show-toplevel 2>/dev/null || true)
 shared=1

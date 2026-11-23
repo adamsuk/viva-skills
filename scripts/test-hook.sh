@@ -89,6 +89,10 @@ status=0; err=$( (cd "$r" && bash "$installer") 2>&1 >/dev/null) || status=$?
 [[ $status -eq 1 ]] || fail "expected 1, got $status"
 grep -qF 'every repository' <<< "$err" || fail "no explanation: $err"
 [[ ! -e $ROOT/global-hooks/post-commit ]] || fail "installed anyway"
+r2=$(newrepo shared2); (cd "$r2" && git config core.hooksPath "$ROOT/not-yet-there")
+(cd "$r2" && bash "$installer" >/dev/null 2>&1) || true
+(cd "$r2" && bash "$installer" --uninstall >/dev/null 2>&1) || true
+[[ ! -e $ROOT/not-yet-there ]] || fail "refusing or uninstalling created the hooks dir"
 (cd "$r" && bash "$installer" --force | grep -qF 'shared via core.hooksPath') || fail "--force gave no notice"
 [[ -x $ROOT/global-hooks/post-commit ]] || fail "--force did not install"
 printf 'ok: %s\n' "$tname"
