@@ -92,6 +92,7 @@ cd /path/to/your/repo && bash ~/viva-skills/scripts/install-hook.sh
 
 - `VIVA_REMIND=off` silences it; `VIVA_REMIND_EVERY=5` reminds every fifth commit instead.
 - It won't replace an existing post-commit hook unless you pass `--force`.
+- If your git config sets a shared `core.hooksPath` (for example a global one), the hook would run in every repository using that directory, so the installer refuses unless you pass `--force`.
 - `bash ~/viva-skills/scripts/install-hook.sh --uninstall` removes it (and only it).
 
 ### What is stored

@@ -10,12 +10,14 @@
 [ "${VIVA_REMIND:-on}" = "off" ] && exit 0
 
 every=${VIVA_REMIND_EVERY:-3}
-case $every in '' | *[!0-9]* | 0) every=3 ;; esac
+# Only plain numbers 1-9999: no leading zeros (dash reads 08 as bad octal), nothing huge.
+case $every in '' | *[!0-9]* | 0* | ?????*) every=3 ;; esac
 
 gitdir=$(git rev-parse --git-dir 2>/dev/null) || exit 0
 counter="$gitdir/viva-remind-count"
 n=$(cat "$counter" 2>/dev/null)
-case $n in '' | *[!0-9]*) n=0 ;; esac
+# A damaged counter (empty, non-numeric, leading zero, huge) just restarts at 0.
+case $n in '' | *[!0-9]* | 0?* | ?????*) n=0 ;; esac
 n=$((n + 1))
 
 if [ "$n" -ge "$every" ]; then

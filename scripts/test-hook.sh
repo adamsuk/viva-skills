@@ -7,6 +7,8 @@ installer="$here/install-hook.sh"
 ROOT=$(mktemp -d)
 trap 'rm -rf "$ROOT"' EXIT
 unset VIVA_REMIND VIVA_REMIND_EVERY
+# Keep the user's own git config (core.hooksPath, signing) out of the tests.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@example.invalid GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.invalid
 
 fail() { printf 'FAIL: %s: %s\n' "$tname" "$1" >&2; exit 1; }
@@ -57,6 +59,43 @@ r=$(newrepo un); (cd "$r" && bash "$installer" >/dev/null && bash "$installer" -
 printf '#!/bin/sh\necho mine\n' > "$r/.git/hooks/post-commit"
 status=0; (cd "$r" && bash "$installer" --uninstall >/dev/null 2>&1) || status=$?
 [[ $status -eq 1 && -e $r/.git/hooks/post-commit ]] || fail "removed someone else's hook (status $status)"
+printf 'ok: %s\n' "$tname"
+
+tname="a damaged counter or a huge interval never errors"
+r=$(newrepo damaged); (cd "$r" && bash "$installer" >/dev/null)
+for bad in 08 007 99999999999999999999 abc ""; do
+  printf '%s' "$bad" > "$r/.git/viva-remind-count"
+  out=$( (cd "$r" && sh .git/hooks/post-commit) 2>&1; echo "rc=$?")
+  [[ $out == "rc=0" ]] || fail "counter [$bad]: $out"
+done
+out=$( (cd "$r" && VIVA_REMIND_EVERY=99999999999999999999 sh .git/hooks/post-commit) 2>&1; echo "rc=$?")
+[[ $out == "rc=0" ]] || fail "huge interval: $out"
+printf 'ok: %s\n' "$tname"
+
+tname="--force replaces a symlinked hook without writing through it"
+r=$(newrepo link); mkdir -p "$r/tools"; printf '#!/bin/sh\necho tracked\n' > "$r/tools/hook.sh"
+ln -s ../../tools/hook.sh "$r/.git/hooks/post-commit"
+status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
+[[ $status -eq 1 ]] || fail "symlink without --force: $status"
+(cd "$r" && bash "$installer" --force >/dev/null) || fail "--force failed"
+[[ ! -L $r/.git/hooks/post-commit ]] || fail "hook is still a symlink"
+grep -qx 'echo tracked' "$r/tools/hook.sh" || fail "symlink target was overwritten"
+printf 'ok: %s\n' "$tname"
+
+tname="a shared core.hooksPath needs --force"
+r=$(newrepo shared); mkdir -p "$ROOT/global-hooks"
+(cd "$r" && git config core.hooksPath "$ROOT/global-hooks")
+status=0; err=$( (cd "$r" && bash "$installer") 2>&1 >/dev/null) || status=$?
+[[ $status -eq 1 ]] || fail "expected 1, got $status"
+grep -qF 'every repository' <<< "$err" || fail "no explanation: $err"
+[[ ! -e $ROOT/global-hooks/post-commit ]] || fail "installed anyway"
+(cd "$r" && bash "$installer" --force | grep -qF 'shared via core.hooksPath') || fail "--force gave no notice"
+[[ -x $ROOT/global-hooks/post-commit ]] || fail "--force did not install"
+printf 'ok: %s\n' "$tname"
+
+tname="a repo-local core.hooksPath is fine without --force"
+r=$(newrepo local); (cd "$r" && git config core.hooksPath .githooks && bash "$installer" >/dev/null) || fail "refused a repo-local hooksPath"
+[[ -x $r/.githooks/post-commit ]] || fail "not installed in .githooks"
 printf 'ok: %s\n' "$tname"
 
 tname="bad usage and outside a repo"
