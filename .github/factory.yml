@@ -1,0 +1,17 @@
+# Factory agents for viva-skills (see the gh-factory README, "Agents", and
+# adamsuk/software-factory AGENTS.md). Enrolled 2026-11-23 (adamsuk/software-factory#456).
+# The maintainer merges pull requests, so agents.merge stays false.
+agents:
+  roles: [builder, reviewer]
+  merge: false
+  # CodeRabbit reviews pull requests into main here (first seen 2026-11-23), so a merge also needs
+  # no blocking CodeRabbit findings plus PR Reviewer's review (AGENTS.md section 6). It skips
+  # stacked PRs whose base is not main; ask it with `@coderabbitai review` on size/L and XL ones.
+  review_bot: coderabbit
+  # What test.yml runs. Bash and Python 3 only.
+  test_command: bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh
+
+# Check names: the test job in test.yml and the changelog job in changelog.yml.
+required_checks:
+  - test
+  - changelog
