@@ -58,6 +58,24 @@ run "$ROOT/schemas.json" "$d"; [[ $status -eq 1 ]] || fail "exit $status: $out"
 grep -qF 'no example log lines found' <<< "$out" || fail "$out"
 printf 'ok: %s\n' "$tname"
 
+tname="a trailing empty field counts as a field"
+d=$(case_dir trailing); skill "$d" "${L10/VER/0.3.1} | "
+run "$ROOT/schemas.json" "$d"; [[ $status -eq 1 ]] || fail "exit $status: $out"
+grep -qF '11 fields, schema 0.3.1 has 10' <<< "$out" || fail "$out"
+printf 'ok: %s\n' "$tname"
+
+tname="an unreadable schemas file exits 2"
+if [[ $EUID -eq 0 ]]; then
+  # root can read a mode-000 file, so this case only runs as a normal user (as in CI).
+  printf 'skip: %s (running as root)\n' "$tname"
+else
+  cp "$ROOT/schemas.json" "$ROOT/locked.json"; chmod 000 "$ROOT/locked.json"
+  run "$ROOT/locked.json" "$here/../skills"; chmod 600 "$ROOT/locked.json"
+  [[ $status -eq 2 ]] || fail "exit $status: $out"
+  grep -qF 'cannot read' <<< "$out" || fail "$out"
+  printf 'ok: %s\n' "$tname"
+fi
+
 tname="the repo's own skills pass against the fixture"
 run "$ROOT/schemas.json" "$here/../skills"; [[ $status -eq 0 ]] || fail "exit $status: $out"
 printf 'ok: %s\n' "$tname"
