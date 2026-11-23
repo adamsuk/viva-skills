@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.7"
+  version: "0.2.0"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -30,6 +30,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
 2. **Parse and group**
    - Prefer the versioned schema. Fall back to treating each line as topic + confidence + grade if the format is loose.
    - Group by topic. Note skill versions if present.
+   - Lines from skill 0.4.x carry an 11th field, `ai-use` (`hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`). Older lines have none: treat them as `unknown`.
 
 3. **Assess**
    - Leave `disputed` checks out of every signal below: the question was faulty, not the user.
@@ -37,6 +38,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Identify thin topics: repeated partial/miss, or single high-confidence miss.
    - Note solid areas (recent understood with matching or lower confidence).
    - Separate mechanism / observed / hazard claims when the original questions did.
+   - If any line records `ai-use`, compare grades by it (counts only). If delegated or agent-built changes were understood less often than the rest, say so in one line and suggest asking the agent why, or generating then making sure the user could rewrite it, on the next change. This is the pattern the research found matters most; it is a nudge, not a verdict.
 
 4. **Report**
    - Short summary: N checks, M topics, K thin (and D disputed, if any).
