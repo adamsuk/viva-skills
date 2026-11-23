@@ -59,7 +59,7 @@ These skills can be served over MCP using the Skills extension (SEP-2640) or a h
 ### Releasing
 
 1. In the release pull request, bump `metadata.version` in each changed skill, set `VERSION` to the new release, and add a CHANGELOG entry.
-2. After it merges, the maintainer tags `main`: `git tag v$(cat VERSION) && git push origin v$(cat VERSION)`.
+2. After it merges, the maintainer updates local `main` and tags it: `git checkout main && git pull --ff-only origin main && git tag v$(cat VERSION) && git push origin v$(cat VERSION)`. `--ff-only` stops if local `main` has diverged, so the tag never lands on a stale commit.
 
 `scripts/validate-skills.sh` checks that `VERSION` is X.Y.Z.
 
