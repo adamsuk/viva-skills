@@ -6,6 +6,7 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ### Changed
 
+- `viva` 0.3.4 says what it keeps before the first question on a device: the fields of the log line, that it stays in `~/.agents/viva-log.md` and is never sent anywhere, why, how long, and that "no log" skips it. Both skills now say the personal map keeps a pasted log "in that browser on that device" instead of naming IndexedDB (`viva-assess` 0.1.6). Why: the guide's Best practice is to say what is collected, why, and for how long before the first question, and the map keeps the log in local storage ([adamsuk/software-factory#460](https://github.com/adamsuk/software-factory/issues/460), [#3](https://github.com/adamsuk/viva-skills/pull/3)).
 - The README says what the skills actually do with your answers: one line per check in `~/.agents/viva-log.md` on your device, never posted or shared unless you ask, and a new What is stored section lists the fields, where they live, why, and how to delete them. It said the default was a private GitHub gist, which contradicted both skills. Why: the research is Strong that monitoring without a clear, transparent purpose goes with worse attitudes, and the guide recommends saying what is collected before collecting it ([adamsuk/software-factory#457](https://github.com/adamsuk/software-factory/issues/457), [#2](https://github.com/adamsuk/viva-skills/pull/2)).
 
 ### Added

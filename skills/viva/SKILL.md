@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), ask one small scenario question about what the change actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, or want to understand a recent diff.
 license: MIT
 metadata:
-  version: "0.3.3"
+  version: "0.3.4"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -14,6 +14,13 @@ compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and othe
 You are helping the user check their own understanding of a recent change. This is practice, not a gate. N/A or "skip" is always fine.
 
 ## Steps
+
+0. **Say what is kept (first run on this device)**
+   - If `~/.agents/viva-log.md` does not exist yet (or you cannot tell), say this in two or three short lines before anything else, then carry on without waiting:
+     - After grading, one line per check is kept: date and time, skill version, repository, branch or PR, commit, a short topic, the user's confidence, the grade, the scope, and whether the behaviour was live.
+     - Where: `~/.agents/viva-log.md` on this device (or printed, if there is no filesystem). Nothing is posted, shared or sent anywhere.
+     - Why: so the user can see their own solid and thin areas over time on the personal map. It stays until they delete the file. Saying "no log" skips it.
+   - Once the file exists, do not repeat this.
 
 1. **Pick the scope**
    Candidate scopes, in this default order:
@@ -77,11 +84,11 @@ You are helping the user check their own understanding of a recent change. This 
 
 6. **Log (default — device-local persistence)**
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
-   - If filesystem access is not available, always print the log line and tell the user they can open the personal map on the viva platform (https://adamsuk.github.io/viva) to store it in the browser (IndexedDB) so it persists on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.3). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.3.3) as the second field so the platform can dispatch.
+   - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.3.4). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.3.4) as the second field so the platform can dispatch.
    - Format: `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live`
-   - Example: `2026-11-20 17:25 | 0.3.3 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
+   - Example: `2026-11-20 17:25 | 0.3.4 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live`
    - `scope` is one of: session, checkout, last-commit, uncommitted, named.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - If the user says "no log" or "skip log", omit it.
