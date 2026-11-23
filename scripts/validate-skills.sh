@@ -10,6 +10,7 @@
 #   - metadata.version: present and X.Y.Z
 #   - every "currently X.Y.Z" in the body equals metadata.version
 #   - every example log line ("YYYY-MM-DD HH:MM | X.Y.Z | ...") uses metadata.version
+# And, when <skills-dir>/../VERSION exists (the repo release version), that it is X.Y.Z.
 #
 # Exit 0 when every skill passes, 1 with one "file: problem" line per failure,
 # 2 on bad usage. Needs only Bash and Python 3 (stdlib).
@@ -92,6 +93,12 @@ for path in skills:
     for m in LOG_LINE.finditer(body):
         if m.group(1) != version:
             problems.append(f"{path}: example log line uses {m.group(1)}, metadata.version is {version}")
+
+version_file = root.resolve().parent / "VERSION"
+if version_file.is_file():
+    release = version_file.read_text(encoding="utf-8").strip()
+    if not SEMVER.match(release):
+        problems.append(f"{version_file.name}: '{release}' is not X.Y.Z")
 
 for p in problems:
     print(p)
