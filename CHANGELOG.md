@@ -4,6 +4,10 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ## 2026-11-23
 
+### Fixed
+
+- `scripts/check-log-contract.sh`: a schemas file that exists but can't be read now exits 2 with a message instead of crashing with exit 1, and an example line ending in ` | ` (an extra empty field) is now counted and rejected; the line used to be trimmed before splitting, which dropped that field. Why: CodeRabbit found both just after #8 merged ([adamsuk/software-factory#483](https://github.com/adamsuk/software-factory/issues/483), [#9](https://github.com/adamsuk/viva-skills/pull/9)).
+
 ### Changed
 
 - The README lists what each skill now does (dispute a question, check a bot review comment, record how the change was made) and how releases work: `VERSION` is the repository release (now 0.4.1, matching `viva`), each release is tagged `v<VERSION>`, and the pin example uses a tag that will exist. `scripts/validate-skills.sh` also checks `VERSION` is X.Y.Z. Why: the README described only the 0.3-era skill, told users to pin `v0.1.0` though the repo had no tags, and `VERSION` said 0.1.0 while the skills were at 0.4.1 and 0.2.0 ([adamsuk/software-factory#473](https://github.com/adamsuk/software-factory/issues/473), [#7](https://github.com/adamsuk/viva-skills/pull/7)).
