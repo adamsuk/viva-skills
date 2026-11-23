@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.5"
+  version: "0.1.6"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -24,7 +24,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
 1. **Find the input**
    - Prefer the local file `~/.agents/viva-log.md` if it exists and the agent has filesystem access.
    - If the user provides a path, file, or paste, use that instead.
-   - Otherwise tell the user they can open the personal map on the viva platform (https://adamsuk.github.io/viva) where the log is stored in the browser (IndexedDB) on that device, and ask them to paste an export or the relevant lines.
+   - Otherwise tell the user they can open the personal map on the viva platform (https://adamsuk.github.io/viva) where the log is kept in that browser on that device, and ask them to paste an export or the relevant lines.
    - Prefer the platform schema (fetch https://adamsuk.github.io/viva/log-schemas.json if needed). Free-form answers with topics and confidence are also fine.
 
 2. **Parse and group**
