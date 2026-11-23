@@ -4,8 +4,10 @@
 agents:
   roles: [builder, reviewer]
   merge: false
-  # CodeRabbit has not been confirmed on this repo yet, so PR Reviewer's review is the gate.
-  review_bot: none
+  # CodeRabbit reviews pull requests into main here (first seen 2026-11-23), so a merge also needs
+  # no blocking CodeRabbit findings plus PR Reviewer's review (AGENTS.md section 6). It skips
+  # stacked PRs whose base is not main; ask it with `@coderabbitai review` on size/L and XL ones.
+  review_bot: coderabbit
   # What test.yml runs. Bash and Python 3 only.
   test_command: bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh
 
