@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.1.4"
+  version: "0.1.5"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -43,7 +43,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - List solid topics briefly.
    - Do not invent metrics or claim this proves understanding. A model can answer most of these questions; the value is the human's practice.
    - Always mention the source (local file, browser map, or paste).
-   - Always offer the personal map URL so the user can view the parsed log visually: https://adamsuk.github.io/viva (or their local build). Suggest they can drop the same log file or paste an export there if they want the interactive topic view.
+   - **Required:** End the report with this exact sentence (or equivalent that includes the full URL): "You can also open the personal map at https://adamsuk.github.io/viva and drop the same log file (or paste an export) to see the interactive topic view."
 
 5. **Stay private**
    - Do not post, share, or store the answers beyond the local file, browser map, or conversation unless the user explicitly asks.
@@ -55,6 +55,6 @@ You help the user see patterns across multiple viva answers or a log file. This 
 - If the log mixes versions, say so and still summarise.
 - Cite the platform schema URL when relevant.
 - Prefer the local device log so more checks improve the picture over time. Browser map or paste is the fallback.
-- Always surface the personal map URL in the report, even when the local file was used successfully.
+- The personal map URL must appear in every report. Do not omit it.
 
 This skill sits alongside the single-check `viva` skill. See https://github.com/adamsuk/viva for the research and the personal map.
