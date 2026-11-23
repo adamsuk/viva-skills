@@ -1,6 +1,7 @@
 name: Test
 
-# Validates every skills/*/SKILL.md and runs the validator's own tests.
+# Validates every skills/*/SKILL.md, runs the scripts' own tests, and checks the
+# skills' example log lines against the platform's live log schemas.
 # Needs only Bash and Python 3, both on ubuntu-latest.
 on:
   pull_request:
@@ -19,3 +20,10 @@ jobs:
           persist-credentials: false
       - run: bash scripts/test-validate-skills.sh
       - run: bash scripts/validate-skills.sh
+      - run: bash scripts/test-check-log-contract.sh
+      # The platform owns the log format: every example log line in a SKILL.md must
+      # parse against the live schemas, so the two repos can't drift apart unnoticed.
+      - name: Check example log lines against the live log-schemas.json
+        run: |
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/log-schemas.json" https://adamsuk.github.io/viva/log-schemas.json
+          bash scripts/check-log-contract.sh "$RUNNER_TEMP/log-schemas.json"

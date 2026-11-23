@@ -15,8 +15,13 @@ map live in [adamsuk/viva](https://github.com/adamsuk/viva).
 ## Test
 
 ```bash
-bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh
+bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash scripts/test-check-log-contract.sh
 ```
+
+CI also checks every example log line against the live
+[log-schemas.json](https://adamsuk.github.io/viva/log-schemas.json) with
+`scripts/check-log-contract.sh`. If you change the line a skill writes, the platform
+needs the matching schema first (adamsuk/viva `src/viva/log-schemas.ts`), or CI fails.
 
 That is `agents.test_command` in `.github/factory.yml` and what `test.yml`
 runs. `validate-skills.sh` checks frontmatter, that `name` matches the folder,
