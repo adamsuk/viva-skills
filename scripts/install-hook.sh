@@ -31,11 +31,23 @@ ours() { [[ -f $dest && ! -L $dest ]] && head -n 3 "$dest" | grep -qxF "# $marke
 
 # A global or shared core.hooksPath would put the hook in every repository using that
 # directory, not just this one. Refuse unless --force, and say where it would go.
-# Resolve a path without creating it: walk up to the nearest existing parent.
+# Resolve a path without creating it: walk up to the nearest existing parent, resolve
+# that, then apply the missing part lexically (dirs that don't exist can't be symlinks).
+# If the missing part had . or .., resolve the result again, since it may now name an
+# existing directory or symlink.
 abs() {
-  local p=$1 tail=""
-  while [[ ! -d $p && $p != / && $p != . ]]; do tail="/$(basename "$p")$tail"; p=$(dirname "$p"); done
-  printf '%s%s' "$(cd "$p" 2>/dev/null && pwd -P || printf '%s' "$p")" "$tail"
+  local p=$1 tail="" base c dots=0
+  while [[ ! -d $p && $p != / && $p != . ]]; do tail="$(basename "$p")/$tail"; p=$(dirname "$p"); done
+  base=$(cd "$p" 2>/dev/null && pwd -P || printf '%s' "$p")
+  local IFS=/
+  for c in $tail; do
+    case $c in
+      '' | .) dots=1 ;;
+      ..) dots=1; base=$(dirname "$base") ;;
+      *) base="${base%/}/$c" ;;
+    esac
+  done
+  if [[ $dots -eq 1 ]]; then abs "$base"; else printf '%s' "$base"; fi
 }
 # Inside this repository's git dir or its working tree (e.g. a repo-local .githooks) is fine.
 top=$(git rev-parse --show-toplevel 2>/dev/null || true)
@@ -43,7 +55,12 @@ shared=1
 case "$(abs "$hooks")/" in "$(abs "$common")"/*) shared=0 ;; esac
 if [[ -n $top ]]; then case "$(abs "$hooks")/" in "$(abs "$top")"/*) shared=0 ;; esac; fi
 
+# With core.hooksPath pointing at this checkout's own hooks/ dir, the destination IS the
+# shipped hook: it is already installed, and removing it would delete the source.
+same=0; [[ -e $dest && $src -ef $dest ]] && same=1
+
 if [[ $mode == uninstall ]]; then
+  [[ $same -eq 1 ]] && { echo "$dest is viva-skills' own hooks/post-commit, not an installed copy; unset core.hooksPath instead" >&2; exit 1; }
   if ours; then rm -f "$dest"; echo "removed the viva reminder from $dest"; exit 0; fi
   [[ -e $dest || -L $dest ]] && { echo "$dest is not the viva reminder; left it alone" >&2; exit 1; }
   echo "no viva reminder installed"; exit 0
@@ -59,6 +76,7 @@ if [[ ( -e $dest || -L $dest ) ]] && ! ours && [[ $mode != force ]]; then
   exit 1
 fi
 
+if [[ $same -eq 1 ]]; then echo "the viva reminder is already in place at $dest (core.hooksPath uses this checkout's hooks/)"; exit 0; fi
 mkdir -p "$hooks"
 rm -f "$dest"   # replace a symlink itself, never write through it
 cp "$src" "$dest"

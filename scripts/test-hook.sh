@@ -102,6 +102,26 @@ r=$(newrepo local); (cd "$r" && git config core.hooksPath .githooks && bash "$in
 [[ -x $r/.githooks/post-commit ]] || fail "not installed in .githooks"
 printf 'ok: %s\n' "$tname"
 
+tname="a missing hooksPath with .. that escapes the repo still needs --force"
+r=$(newrepo dotdot); (cd "$r" && git config core.hooksPath "$r/new/../../escaped")
+status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
+[[ $status -eq 1 ]] || fail "expected 1, got $status"
+[[ ! -e $ROOT/escaped ]] || fail "created or wrote outside the repo"
+(cd "$r" && git config core.hooksPath "$r/new/../.githooks" && bash "$installer" >/dev/null) || fail "refused a .. path that stays inside"
+[[ -x $r/.githooks/post-commit ]] || fail "not installed in .githooks"
+printf 'ok: %s\n' "$tname"
+
+tname="hooksPath at the checkout's own hooks/ is already installed, never deleted"
+r=$(newrepo self); mkdir -p "$r/scripts" "$r/hooks"
+cp "$installer" "$r/scripts/"; cp "$here/../hooks/post-commit" "$r/hooks/"
+(cd "$r" && git config core.hooksPath hooks)
+(cd "$r" && bash scripts/install-hook.sh | grep -qF 'already in place') || fail "no already-installed message"
+(cd "$r" && bash scripts/install-hook.sh --force >/dev/null) || fail "--force failed"
+[[ -x $r/hooks/post-commit ]] || fail "install deleted the source hook"
+status=0; (cd "$r" && bash scripts/install-hook.sh --uninstall >/dev/null 2>&1) || status=$?
+[[ $status -eq 1 && -f $r/hooks/post-commit ]] || fail "uninstall: status $status or source removed"
+printf 'ok: %s\n' "$tname"
+
 tname="bad usage and outside a repo"
 status=0; bash "$installer" --nope >/dev/null 2>&1 || status=$?; [[ $status -eq 2 ]] || fail "bad flag: $status"
 mkdir -p "$ROOT/plain"; status=0; (cd "$ROOT/plain" && GIT_CEILING_DIRECTORIES="$ROOT" bash "$installer" >/dev/null 2>&1) || status=$?
