@@ -15,7 +15,7 @@ map live in [adamsuk/viva](https://github.com/adamsuk/viva).
 ## Test
 
 ```bash
-bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash scripts/test-check-log-contract.sh
+bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash scripts/test-check-log-contract.sh && bash scripts/test-hook.sh
 ```
 
 CI also checks every example log line against the live

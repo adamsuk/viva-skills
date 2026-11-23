@@ -1,0 +1,27 @@
+#!/bin/sh
+# viva-skills post-commit reminder (installed by scripts/install-hook.sh).
+#
+# After every Nth commit, prints one line suggesting a /viva check on it.
+# Opt-in, local and silent otherwise: it never blocks a commit, never logs
+# anything about you, and never touches the network.
+#   VIVA_REMIND=off        silence it
+#   VIVA_REMIND_EVERY=N    remind every N commits (default 3)
+
+[ "${VIVA_REMIND:-on}" = "off" ] && exit 0
+
+every=${VIVA_REMIND_EVERY:-3}
+case $every in '' | *[!0-9]* | 0) every=3 ;; esac
+
+gitdir=$(git rev-parse --git-dir 2>/dev/null) || exit 0
+counter="$gitdir/viva-remind-count"
+n=$(cat "$counter" 2>/dev/null)
+case $n in '' | *[!0-9]*) n=0 ;; esac
+n=$((n + 1))
+
+if [ "$n" -ge "$every" ]; then
+  n=0
+  echo "viva: run /viva on this commit? (VIVA_REMIND=off to silence)"
+fi
+
+{ echo "$n" > "$counter"; } 2>/dev/null
+exit 0

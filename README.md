@@ -81,6 +81,19 @@ The single-check skill asks one scenario question, takes your answer + confidenc
 
 The assess skill summarises a set of answers or a log excerpt and suggests next steps. It reads the same local file first, or a paste.
 
+### Optional: a reminder after commits
+
+A check only helps if it happens. If you want a nudge, install the post-commit reminder in a repository you work in. After every third commit it prints one line, `viva: run /viva on this commit?`, and does nothing else: it never blocks a commit, never logs anything, and never uses the network.
+
+```bash
+git clone https://github.com/adamsuk/viva-skills ~/viva-skills   # once
+cd /path/to/your/repo && bash ~/viva-skills/scripts/install-hook.sh
+```
+
+- `VIVA_REMIND=off` silences it; `VIVA_REMIND_EVERY=5` reminds every fifth commit instead.
+- It won't replace an existing post-commit hook unless you pass `--force`.
+- `bash ~/viva-skills/scripts/install-hook.sh --uninstall` removes it (and only it).
+
 ### What is stored
 
 Private by default: nothing is posted, shared or sent anywhere unless you ask.
