@@ -4,6 +4,10 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ## 2026-11-23
 
+### Changed
+
+- The README says what the skills actually do with your answers: one line per check in `~/.agents/viva-log.md` on your device, never posted or shared unless you ask, and a new What is stored section lists the fields, where they live, why, and how to delete them. It said the default was a private GitHub gist, which contradicted both skills. Why: the research is Strong that monitoring without a clear, transparent purpose goes with worse attitudes, and the guide recommends saying what is collected before collecting it ([adamsuk/software-factory#457](https://github.com/adamsuk/software-factory/issues/457), [#2](https://github.com/adamsuk/viva-skills/pull/2)).
+
 ### Added
 
 - Factory onboarding: `scripts/validate-skills.sh` checks every `SKILL.md` (frontmatter, `name` matches the folder, `metadata.version` is X.Y.Z, and every "currently X.Y.Z" and example log line in the body matches it), with tests in `scripts/test-validate-skills.sh`. A `test` workflow pinned by SHA runs both on every pull request, plus the changelog check, a size-label caller, `.github/factory.yml`, `AGENTS.md`, `CODEOWNERS`, and issue and pull-request templates. Why: nothing checked the skills, so a version mismatch between a skill and the log it writes could ship unnoticed, and the factory had no test command to gate changes here ([adamsuk/software-factory#456](https://github.com/adamsuk/software-factory/issues/456), [#1](https://github.com/adamsuk/viva-skills/pull/1)).

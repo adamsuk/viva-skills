@@ -67,9 +67,18 @@ Check my understanding of the last commit
 Review these viva answers / this log
 ```
 
-The single-check skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. By default it appends the line to a private GitHub gist named `viva-log.md` so the history accumulates across sessions and devices (local `~/.agents/viva-log.md` is the fallback if GitHub is unavailable or you say "local log only").
+The single-check skill asks one scenario question, takes your answer + confidence, then shows the key lines and grades the response. It then appends one line to `~/.agents/viva-log.md` on your device, so the history builds up across sessions and repositories. If the agent has no filesystem access, it prints the line instead, and you can keep it in the personal map in your browser. Say "no log" to skip logging.
 
-The assess skill summarises a set of answers or a log excerpt and suggests next steps. It prefers reading the same private gist first.
+The assess skill summarises a set of answers or a log excerpt and suggests next steps. It reads the same local file first, or a paste.
+
+### What is stored
+
+Private by default: nothing is posted, shared or sent anywhere unless you ask.
+
+- **What**: one line per check: date and time, skill version, repository, branch or PR, commit, a short topic, your confidence, the grade, the scope the question covered, and whether the behaviour was live.
+- **Where**: `~/.agents/viva-log.md` on your device, or the personal map's storage in your browser if you put it there.
+- **Why**: so you can see your own solid and thin areas over time on the [personal map](https://adamsuk.github.io/viva).
+- **How long**: until you delete it. Delete the file (`rm ~/.agents/viva-log.md`), or press Forget this log on the personal map.
 
 See the [Viva research](https://github.com/adamsuk/viva) for the evidence behind the approach and the full process model. The personal map on the site is the local viewer for the log.
 
