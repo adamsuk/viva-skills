@@ -32,8 +32,9 @@ and that every "currently X.Y.Z" and example log line in a body matches
 
 - Bump `metadata.version` in every skill you change and update every
   "currently X.Y.Z" and example log line in that body to match. Minor means the
-  log line changed (a new schema version); everything else, wording or
-  behaviour, is a patch. The platform matches log lines by `major.minor`, so a
+  log line's format changed (its fields, so a new schema version); everything
+  else is a patch, including wording, behaviour and changes to the values
+  written into existing fields. The platform matches log lines by `major.minor`, so a
   minor bump without a new schema breaks the contract check and the map.
 - The log format belongs to the platform. A change to the line a skill writes
   needs a new schema version in adamsuk/viva (`src/viva/log-schemas.ts`) first;
