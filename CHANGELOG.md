@@ -2,6 +2,13 @@
 
 All notable changes to the viva skills are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Each section is the date the change merged (YYYY-MM-DD, Europe/London). Skill versions are in each `SKILL.md` (`metadata.version`).
 
+## 2026-11-24
+
+### Changed
+
+- `AGENTS.md`: a skill's minor version now moves only when its log line changes (a new platform schema); behaviour and wording changes are patch bumps. Why: the platform matches log lines by `major.minor`, so a minor bump for behaviour alone (as the old rule asked) would fail the contract check and make the personal map read the lines with the wrong schema ([adamsuk/software-factory#478](https://github.com/adamsuk/software-factory/issues/478), [#11](https://github.com/adamsuk/viva-skills/pull/11)).
+- `viva` 0.4.2 picks the topic before logging: it reads the topic names already in your local log and reuses one exactly when this check is about the same area, otherwise writes a new 2 to 4 word topic naming the area. It reads only the topic field and never shows other lines. `viva-assess` 0.2.1 treats clearly identical areas under different wordings as one topic and says which it merged. Why: topics are free text, so one area split across wordings and weakened the thin-area and re-check signals on the personal map ([adamsuk/software-factory#478](https://github.com/adamsuk/software-factory/issues/478), [#11](https://github.com/adamsuk/viva-skills/pull/11)).
+
 ## 2026-11-23
 
 ### Added
@@ -13,7 +20,6 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ### Changed
 
-- `viva` 0.4.2 picks the topic before logging: it reads the topic names already in your local log and reuses one exactly when this check is about the same area, otherwise writes a new 2 to 4 word topic naming the area. It reads only the topic field and never shows other lines. `viva-assess` 0.2.1 treats clearly identical areas under different wordings as one topic and says which it merged. Why: topics are free text, so one area split across wordings and weakened the thin-area and re-check signals on the personal map ([adamsuk/software-factory#478](https://github.com/adamsuk/software-factory/issues/478), [#11](https://github.com/adamsuk/viva-skills/pull/11)).
 - `scripts/check-log-contract.sh`: a schemas file that exists but can't be read now exits 2 with a message instead of crashing with exit 1, and an example line ending in ` | ` (an extra empty field) is now counted and rejected; the line used to be trimmed before splitting, which dropped that field. Why: CodeRabbit found both just after #8 merged ([adamsuk/software-factory#483](https://github.com/adamsuk/software-factory/issues/483), [#9](https://github.com/adamsuk/viva-skills/pull/9)).
 - The README lists what each skill now does (dispute a question, check a bot review comment, record how the change was made) and how releases work: `VERSION` is the repository release (now 0.4.1, matching `viva`), each release is tagged `v<VERSION>`, and the pin example uses a tag that will exist. `scripts/validate-skills.sh` also checks `VERSION` is X.Y.Z. Why: the README described only the 0.3-era skill, told users to pin `v0.1.0` though the repo had no tags, and `VERSION` said 0.1.0 while the skills were at 0.4.1 and 0.2.0 ([adamsuk/software-factory#473](https://github.com/adamsuk/software-factory/issues/473), [#7](https://github.com/adamsuk/viva-skills/pull/7)).
 - `viva` 0.4.1 has a review-comment scope: point it at a bot's review comment you plan to forward or act on, and it verifies the comment's claim against the code first, then asks one question that tests whether you could defend or refute it. The reveal says whether the bot was right. Logged with scope `review-comment`. Why: the guide recommends that whoever forwards an AI comment owns it and gets the same small question as authors. Prior art found no tool that does this, and developers rejected more of one review bot's comments (56%) than they accepted (36%) ([adamsuk/software-factory#466](https://github.com/adamsuk/software-factory/issues/466), [#6](https://github.com/adamsuk/viva-skills/pull/6)). Source: [Is Agentic Code Review Helpful?](https://arxiv.org/abs/2607.03316) (3 July 2026).
