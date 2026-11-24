@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.4.4"
+  version: "0.5.0"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -17,7 +17,7 @@ You are helping the user check their own understanding of a recent change. This 
 
 0. **Say what is kept (first run on this device)**
    - If `~/.agents/viva-log.md` does not exist yet (or you cannot tell), say this in two or three short lines before anything else, then carry on without waiting:
-     - After grading, one line per check is kept: date and time, skill version, repository, branch or PR, commit, a short topic, the user's confidence, the grade, the scope, whether the behaviour was live, and how the change was made (by hand, with AI, by an agent).
+     - After grading, one line per check is kept: date and time, skill version, repository, branch or PR, commit, a short topic, the user's confidence, the grade, the scope, whether the behaviour was live, how the change was made (by hand, with AI, by an agent), and, for a bot review comment, whether its claim held.
      - Where: `~/.agents/viva-log.md` on this device (or printed, if there is no filesystem). Nothing is posted, shared or sent anywhere.
      - Why: so the user can see their own solid and thin areas over time on the personal map. It stays until they delete the file. Saying "no log" skips it.
    - Once the file exists, do not repeat this.
@@ -42,7 +42,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Verify the comment's claim first, the same way as step 2: read the code and callers, and run the cheapest check that confirms or refutes it. Decide whether the claim holds, partly holds, or is wrong.
    - Ask one question that tests whether the user could defend or refute the comment to the author: what actually happens in the case the comment describes, and why. Do not reveal your verdict on the comment before the user answers.
    - In the reveal, say whether the bot's claim held (with file:line), then grade the user as usual. A user who correctly rejects a wrong comment understood it.
-   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, and a topic naming what the comment was about.
+   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes the question and the dispute stands, re-check the verdict too.
 
    **Review scope** (approval is a claim of understanding):
    - The target is the whole PR against its base, read from the PR head as for a bound PR. The user didn't write it, so ask about its key behaviour: the thing the reviewer would need to explain to the author to stand behind an approval.
@@ -110,15 +110,16 @@ You are helping the user check their own understanding of a recent change. This 
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.4.4). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.4.4) as the second field so the platform can dispatch.
-   - Format (log schema 0.4.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use`
-   - Example: `2026-11-20 17:25 | 0.4.4 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood`
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.5.0). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.5.0) as the second field so the platform can dispatch.
+   - Format (log schema 0.5.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim`
+   - Example: `2026-11-20 17:25 | 0.5.0 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - `ai-use` is one of: `hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`.
-   - Never rewrite or reformat earlier lines in the log; older lines in the 0.3 format stay as they are (the map reads both).
+   - `bot-claim` is one of: `held`, `partly`, `wrong` (review-comment scope only: whether the bot's claim held when you checked it against the code), or `n/a` for every other scope.
+   - Never rewrite or reformat earlier lines in the log; older lines in the 0.3 and 0.4 formats stay as they are (the map reads them all).
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 
