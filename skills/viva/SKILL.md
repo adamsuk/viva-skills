@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.4.2"
+  version: "0.4.3"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -57,6 +57,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Print one line stating the resolved target before the question (repo, PR number or branch, ref/SHA, scope used, number of files) so the user can correct it.
 
 3. **Generate one scenario question**
+   - **Re-check a thin area first.** If `~/.agents/viva-log.md` exists and you can read it, find topics whose latest check (ignoring `disputed`) was `missed` or `partial` at least 7 days ago. Read only the date, topic and grade fields (the first, sixth and eighth), and never show the user other lines. If the change in scope touches one of those areas, ask about it, say so in one line before the question ("You missed <topic> on <date>; this is a re-check."), and log under that same topic. If it touches none, carry on as below. Never pick a question the change doesn't support just to re-check. Why: spaced retrieval of what you got wrong is the practice the research rates Strong, and the personal map flags these same topics for a re-check.
    - Concrete situation that exercises the change (or the key live change in the PR/branch).
    - Prefer a question whose answer can be reasoned out from the diff and callers, with a concrete input/state, and where at least one plausible wrong answer follows from a common misconception.
    - Cheap to verify beats clever: if a 5-line script or an existing test can confirm the answer, run it before asking.
@@ -103,10 +104,10 @@ You are helping the user check their own understanding of a recent change. This 
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.4.2). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.4.2) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.4.3). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.4.3) as the second field so the platform can dispatch.
    - Format (log schema 0.4.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use`
-   - Example: `2026-11-20 17:25 | 0.4.2 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood`
+   - Example: `2026-11-20 17:25 | 0.4.3 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
