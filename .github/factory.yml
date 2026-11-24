@@ -9,7 +9,7 @@ agents:
   # stacked PRs whose base is not main; ask it with `@coderabbitai review` on size/L and XL ones.
   review_bot: coderabbit
   # What test.yml runs, minus the live-schema check (that needs the network). Bash and Python 3 only.
-  test_command: bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash scripts/test-check-log-contract.sh
+  test_command: bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash scripts/test-check-log-contract.sh && bash scripts/test-hook.sh
 
 # Check names: the test job in test.yml and the changelog job in changelog.yml.
 required_checks:
