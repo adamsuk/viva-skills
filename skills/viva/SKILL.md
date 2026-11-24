@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.5.0"
+  version: "0.5.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -42,7 +42,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Verify the comment's claim first, the same way as step 2: read the code and callers, and run the cheapest check that confirms or refutes it. Decide whether the claim holds, partly holds, or is wrong.
    - Ask one question that tests whether the user could defend or refute the comment to the author: what actually happens in the case the comment describes, and why. Do not reveal your verdict on the comment before the user answers.
    - In the reveal, say whether the bot's claim held (with file:line), then grade the user as usual. A user who correctly rejects a wrong comment understood it.
-   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes, re-check the claim along with the question (step 5a) and log the re-checked verdict.
+   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes, re-check the claim along with the question (step 5a); if the verdict changes, append a correction line (step 6).
 
    **Review scope** (approval is a claim of understanding):
    - The target is the whole PR against its base, read from the PR head as for a bound PR. The user didn't write it, so ask about its key behaviour: the thing the reviewer would need to explain to the author to stand behind an approval.
@@ -104,22 +104,23 @@ You are helping the user check their own understanding of a recent change. This 
    - Model-written questions about code are not reliably correct, so a dispute is taken seriously, not argued away.
    - Re-check the question's premise and the expected answer against the code at the target ref (read it again; re-run any experiment). Do not rely on what you said in the question or the reveal.
    - Say plainly whether the dispute stands: the premise was wrong, the question was ambiguous, or the expected answer was wrong. Own it.
-   - If it stands, the grade becomes `disputed` and the original grade is not logged. If it does not, explain why with file:line, keep the grade, and say the user can still log it as disputed by saying so (their call; it is their log).
+   - If it stands, the grade becomes `disputed`. If the line is already in the log, append a correction line (see step 6); otherwise log `disputed` instead of the original grade. If it does not, explain why with file:line, keep the grade, and say the user can still log it as disputed by saying so (their call; it is their log).
 
 6. **Log (default — device-local persistence)**
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.5.0). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.5.0) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.5.1). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.5.1) as the second field so the platform can dispatch.
    - Format (log schema 0.5.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim`
-   - Example: `2026-11-20 17:25 | 0.5.0 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a`
+   - Example: `2026-11-20 17:25 | 0.5.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - `ai-use` is one of: `hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`.
    - `bot-claim` is one of: `held`, `partly`, `wrong` (review-comment scope only: whether the bot's claim held when you checked it against the code), or `n/a` for every other scope.
    - Never rewrite or reformat earlier lines in the log; older lines in the 0.3 and 0.4 formats stay as they are (the map reads them all).
+   - **Corrections.** If a dispute stands, or a bot verdict changes, after the line was written, append the same check again: copy the timestamp, repo, branch-or-pr, commit-or-ref and topic exactly from the earlier line, and write the new grade or `bot-claim`. The personal map keeps the last line for each check, so the correction replaces the original without editing it.
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 
