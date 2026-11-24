@@ -31,7 +31,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Prefer the versioned schema. Fall back to treating each line as topic + confidence + grade if the format is loose.
    - Group by topic. Note skill versions if present.
    - Topics are free text, so the same area can appear under different wordings (`webhook retry`, `retry policy for webhooks`). Treat clearly identical areas as one topic, and say in the report which wordings you merged, so the user can check it. When unsure, keep them apart.
-   - Lines from skill 0.4.x carry an 11th field, `ai-use` (`hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`). Older lines have none: treat them as `unknown`.
+   - Lines from skill 0.4.x and later carry an 11th field, `ai-use` (`hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`). Older lines have none: treat them as `unknown`.
    - Lines from skill 0.5.x add a 12th field, `bot-claim` (`held`, `partly`, `wrong`, `n/a`): for a `review-comment` check, whether the bot's claim held. Older lines have none: treat them as `n/a`.
 
 3. **Assess**

@@ -42,7 +42,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Verify the comment's claim first, the same way as step 2: read the code and callers, and run the cheapest check that confirms or refutes it. Decide whether the claim holds, partly holds, or is wrong.
    - Ask one question that tests whether the user could defend or refute the comment to the author: what actually happens in the case the comment describes, and why. Do not reveal your verdict on the comment before the user answers.
    - In the reveal, say whether the bot's claim held (with file:line), then grade the user as usual. A user who correctly rejects a wrong comment understood it.
-   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes the question and the dispute stands, re-check the verdict too.
+   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes, re-check the claim along with the question (step 5a) and log the re-checked verdict.
 
    **Review scope** (approval is a claim of understanding):
    - The target is the whole PR against its base, read from the PR head as for a bound PR. The user didn't write it, so ask about its key behaviour: the thing the reviewer would need to explain to the author to stand behind an approval.

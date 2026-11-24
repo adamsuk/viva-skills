@@ -8,7 +8,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
 
 - **viva** — One small scenario question about your recent change (or a pointed-to diff/commit), with a confidence rating. Practice, not a gate.
   - **Dispute a question**: if the question itself was wrong, say "dispute"; the agent re-checks the code and, if you're right, logs it as `disputed` so it never counts against you.
-  - **Check a bot review comment**: point it at a CodeRabbit (or other bot) comment before you forward or act on it; it verifies the claim, then asks whether you could defend or refute it.
+  - **Check a bot review comment**: point it at a CodeRabbit (or other bot) comment before you forward or act on it; it verifies the claim, then asks whether you could defend or refute it. The verdict is logged as `bot-claim`, so viva-assess and the map can show how often the bot's comments held.
   - **Before you approve**: reviewing someone else's or an agent's PR? Ask for one question on it first; anything you couldn't explain is worth asking the author about before approving. Logged with scope `review`.
   - **Re-checks what you missed**: when your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.
   - **How the change was made**: it records `ai-use` (by hand, asked AI why, generated then understood, delegated, built by an agent) so the map can show whether how you use AI tracks your understanding.
