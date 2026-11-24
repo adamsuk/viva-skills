@@ -42,7 +42,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Verify the comment's claim first, the same way as step 2: read the code and callers, and run the cheapest check that confirms or refutes it. Decide whether the claim holds, partly holds, or is wrong.
    - Ask one question that tests whether the user could defend or refute the comment to the author: what actually happens in the case the comment describes, and why. Do not reveal your verdict on the comment before the user answers.
    - In the reveal, say whether the bot's claim held (with file:line), then grade the user as usual. A user who correctly rejects a wrong comment understood it.
-   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes, re-check the claim along with the question (step 5a); if the verdict changes, append a correction line (step 6).
+   - Log with scope `review-comment`, the comment's PR as `branch-or-pr`, a topic naming what the comment was about, and `bot-claim` set to your verdict on the claim: `held`, `partly`, or `wrong`. If the user disputes, re-check the claim along with the question (step 5a), and log the re-checked verdict, or append a correction line (step 6) if the line is already written.
 
    **Review scope** (approval is a claim of understanding):
    - The target is the whole PR against its base, read from the PR head as for a bound PR. The user didn't write it, so ask about its key behaviour: the thing the reviewer would need to explain to the author to stand behind an approval.
@@ -104,7 +104,7 @@ You are helping the user check their own understanding of a recent change. This 
    - Model-written questions about code are not reliably correct, so a dispute is taken seriously, not argued away.
    - Re-check the question's premise and the expected answer against the code at the target ref (read it again; re-run any experiment). Do not rely on what you said in the question or the reveal.
    - Say plainly whether the dispute stands: the premise was wrong, the question was ambiguous, or the expected answer was wrong. Own it.
-   - If it stands, the grade becomes `disputed`. If the line is already in the log, append a correction line (see step 6); otherwise log `disputed` instead of the original grade. If it does not, explain why with file:line, keep the grade, and say the user can still log it as disputed by saying so (their call; it is their log).
+   - If it stands, the grade becomes `disputed`. If the line is already in the log, append a correction line (see step 6); otherwise log `disputed` instead of the original grade. If it does not, explain why with file:line, keep the grade, and say the user can still log it as disputed by saying so (their call; it is their log). If they do and the line is already written, append a correction line the same way.
 
 6. **Log (default — device-local persistence)**
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
@@ -120,7 +120,7 @@ You are helping the user check their own understanding of a recent change. This 
    - `ai-use` is one of: `hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`.
    - `bot-claim` is one of: `held`, `partly`, `wrong` (review-comment scope only: whether the bot's claim held when you checked it against the code), or `n/a` for every other scope.
    - Never rewrite or reformat earlier lines in the log; older lines in the 0.3 and 0.4 formats stay as they are (the map reads them all).
-   - **Corrections.** If a dispute stands, or a bot verdict changes, after the line was written, append the same check again: copy the timestamp, repo, branch-or-pr, commit-or-ref and topic exactly from the earlier line, and write the new grade or `bot-claim`. The personal map keeps the last line for each check, so the correction replaces the original without editing it.
+   - **Corrections.** If a dispute stands, or a bot verdict changes, after the line was written, append the same check again: copy every field of the earlier line unchanged (timestamp, repo, branch-or-pr, commit-or-ref, topic, confidence, scope, live, ai-use) except the skill version, which is the current one, and the grade or `bot-claim` being corrected. Skip "Pick the topic first": the topic is copied. The personal map and `viva-assess` keep the last line for each check, so the correction replaces the original without editing it.
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 

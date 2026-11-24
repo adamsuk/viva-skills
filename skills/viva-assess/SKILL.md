@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -29,6 +29,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
 
 2. **Parse and group**
    - Prefer the versioned schema. Fall back to treating each line as topic + confidence + grade if the format is loose.
+   - If two lines share timestamp, repo, branch-or-pr, commit-or-ref, topic (ignoring case and spacing) and scope, the later one is a correction (for example a dispute that stood after logging): use only the last.
    - Group by topic. Note skill versions if present.
    - Topics are free text, so the same area can appear under different wordings (`webhook retry`, `retry policy for webhooks`). Treat clearly identical areas as one topic, and say in the report which wordings you merged, so the user can check it. When unsure, keep them apart.
    - Lines from skill 0.4.x and later carry an 11th field, `ai-use` (`hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`). Older lines have none: treat them as `unknown`.
