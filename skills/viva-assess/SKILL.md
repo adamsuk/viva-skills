@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.2.1"
+  version: "0.2.2"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -39,10 +39,13 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Identify thin topics: repeated partial/miss, or single high-confidence miss.
    - Note solid areas (recent understood with matching or lower confidence).
    - Separate mechanism / observed / hazard claims when the original questions did.
+   - **Does confidence separate knowing from guessing?** Count understood checks per confidence band: high (4–5, or "high"), mid (3, or "medium"), low (1–2, or "low"). Skip any band with fewer than 3 checks. If both high and low have enough, say in one sentence whether high-confidence checks were understood more often than low ones, with the counts (for example "high: 7 of 9 understood; low: 2 of 5"). If they weren't, say confidence isn't yet telling guesses from knowledge, so it is worth pausing on a confident answer before relying on it.
+   - **Drift.** With 10 or more counted checks in date order, compare the latest 5 with all the earlier ones on three things: the understood rate, the share at high confidence, and the share of `delegated` or `agent` changes. If one moved the wrong way by 20 points or more (understood down, or delegated/agent up, or high confidence up while understood fell), say so in one line with both numbers, as a nudge to slow down on the next change. Otherwise say nothing about drift. Five checks is a small sample: never call it a trend or a decline in the user.
    - If any line records `ai-use`, compare grades by it (counts only). If delegated or agent-built changes were understood less often than the rest, say so in one line and suggest asking the agent why, or generating then making sure the user could rewrite it, on the next change. This is the pattern the research found matters most; it is a nudge, not a verdict.
 
 4. **Report**
    - Short summary: N checks, M topics, K thin (and D disputed, if any).
+   - The confidence sentence and any drift line, if step 3 produced them.
    - If there are disputed checks, list them on one line as a question-quality note (several in one topic suggest the questions there need work), never as a gap.
    - List thin topics with the strongest signal and one concrete next step (hand-code the next change in that area, ask why, pair, or do another viva).
    - List solid topics briefly.
