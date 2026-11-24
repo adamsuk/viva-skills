@@ -119,6 +119,14 @@ status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
 [[ ! -e $ROOT/outside/hooks ]] || fail "wrote outside the repo through the symlink"
 printf 'ok: %s\n' "$tname"
 
+tname="a newline in hooksPath doesn't hide a later .. from the check"
+r=$(newrepo newline); mkdir -p "$ROOT/nlout"
+(cd "$r" && git config core.hooksPath "$r/"$'\n'"/../../nlout/hooks")
+status=0; (cd "$r" && bash "$installer" >/dev/null 2>&1) || status=$?
+[[ $status -eq 1 ]] || fail "expected 1, got $status"
+[[ ! -e $ROOT/nlout/hooks ]] || fail "wrote outside the repo"
+printf 'ok: %s\n' "$tname"
+
 tname="hooksPath at the checkout's own hooks/ is already installed, never deleted"
 r=$(newrepo self); mkdir -p "$r/scripts" "$r/hooks"
 cp "$installer" "$r/scripts/"; cp "$here/../hooks/post-commit" "$r/hooks/"

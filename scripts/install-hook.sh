@@ -38,7 +38,7 @@ ours() { [[ -f $dest && ! -L $dest ]] && head -n 3 "$dest" | grep -qxF "# $marke
 abs() {
   local p=$1 c base=/ parts
   [[ $p == /* ]] || p="$PWD/$p"
-  IFS=/ read -ra parts <<< "$p"
+  IFS=/ read -rd '' -a parts < <(printf '%s' "$p") || true   # -d '': keep newlines in names
   for c in "${parts[@]}"; do
     case $c in
       '' | .) ;;
