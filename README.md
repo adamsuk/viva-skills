@@ -54,8 +54,8 @@ These skills can be served over MCP using the Skills extension (SEP-2640) or a h
 ### Versioning
 
 - Each skill has its own `metadata.version` in its SKILL.md. The log line a skill writes carries that version, and the platform's [log-schemas.json](https://adamsuk.github.io/viva/log-schemas.json) says which skill versions each log format covers.
-- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.4.4`).
-- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.4.4` (if your CLI supports `--ref`), or clone that tag.
+- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.5.0`).
+- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.5.0` (if your CLI supports `--ref`), or clone that tag.
 - Update with `npx skills update viva` or by re-installing.
 
 ### Releasing
