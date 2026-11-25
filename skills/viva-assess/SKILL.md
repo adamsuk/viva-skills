@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.4.0"
+  version: "0.4.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -43,7 +43,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Note solid areas (recent understood with matching or lower confidence).
    - Separate mechanism / observed / hazard claims when the original questions did.
    - **Does confidence separate knowing from guessing?** Count understood checks per confidence band: high (4–5, or "high"), mid (3, or "medium"), low (1–2, or "low"). Skip any band with fewer than 3 checks. If both high and low have enough, say in one sentence whether high-confidence checks were understood more often than low ones, with the counts (for example "high: 7 of 9 understood; low: 2 of 5"). If they weren't, say confidence isn't yet telling guesses from knowledge, so it is worth pausing on a confident answer before relying on it.
-   - **Drift.** With 10 or more counted checks in date order, compare the latest 5 with all the earlier ones on three things: the understood rate, the share at high confidence, and the share of `delegated` or `agent` changes (counting only checks that record `ai-use`, and only when each side has at least 3 of them, so older lines without the field can't fake a rise). If one moved the wrong way by 20 points or more (understood down, or delegated/agent up, or high confidence up while understood fell), say so in one line with both numbers, as a nudge to slow down on the next change. Otherwise say nothing about drift. Five checks is a small sample: never call it a trend or a decline in the user.
+   - **Drift.** Leave `practice` checks out: they are old PRs, not recent work. With 10 or more counted checks in date order, compare the latest 5 with all the earlier ones on three things: the understood rate, the share at high confidence, and the share of `delegated` or `agent` changes (counting only checks that record `ai-use`, and only when each side has at least 3 of them, so older lines without the field can't fake a rise). If one moved the wrong way by 20 points or more (understood down, or delegated/agent up, or high confidence up while understood fell), say so in one line with both numbers, as a nudge to slow down on the next change. Otherwise say nothing about drift. Five checks is a small sample: never call it a trend or a decline in the user.
    - If any `review-comment` line records `bot-claim`, give one line with how many of the checked bot comments held, partly held, or were wrong, leaving out disputed checks; if more than one bot appears, give the counts per bot. If most were wrong, say the bot's comments deserve a quick check before anyone acts on them. Catching a wrong claim counts as understanding, not a miss.
    - If any line records `ai-use`, compare grades by it (counts only). If delegated or agent-built changes were understood less often than the rest, say so in one line and suggest asking the agent why, or generating then making sure the user could rewrite it, on the next change. This is the pattern the research found matters most; it is a nudge, not a verdict.
 
@@ -56,6 +56,11 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Do not invent metrics or claim this proves understanding. A model can answer most of these questions; the value is the human's practice.
    - Always mention the source (local file, browser map, or paste).
    - **Required:** End the report with this exact sentence (or equivalent that includes the full URL): "You can also open the personal map at https://adamsuk.github.io/viva and drop the same log file (or paste an export) to see the interactive topic view."
+
+4a. **Experiment 1 (only if asked)**
+   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence`). If a repo and PR appear more than once, the last line is a correction: use only that one.
+   - Report the counts of think, recall and mixed (and skips), and how many of the 20 are done (skips don't count). Leaving `disputed` grades out, give the understood count within each of think, recall and mixed, and say whether the understood rate differs between think and recall, with the counts. Skip any group with fewer than 3. Don't draw a conclusion the numbers don't support: a small sample is a sketch, not a result.
+   - Offer to format it as a row for the Log table in Viva's EXPERIMENTS.md, but don't post or commit it.
 
 5. **Stay private**
    - Do not post, share, or store the answers beyond the local file, browser map, or conversation unless the user explicitly asks.
