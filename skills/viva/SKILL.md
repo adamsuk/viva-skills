@@ -1,6 +1,6 @@
 ---
 name: viva
-description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, write my PR description, or check a CodeRabbit or other bot review comment before passing it on.
+description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, help me write my PR description in my own words, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
   version: "0.6.1"
@@ -125,16 +125,17 @@ You are helping the user check their own understanding of a recent change. This 
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 
-7. **Before you post (optional, offer once)**
-   - Offer this only for the user's own change that is about to become a PR, or whose PR has no description yet: never for the `review` or `review-comment` scopes. Offer it after the log line (or after the reveal, if the user said "no log"), in one line: "Before you post: want to write the PR description in your own words, and add an AI disclosure? Two minutes, or skip."
-   - **Your description, your words.** Ask three short questions in one message: why this change is needed; what it does, in a sentence or two; and the decision you are least sure of. Do not draft the answers. Assemble what the user wrote under Why / What / Least sure, fixing only spelling and layout. If the user asks you to write it for them, say once that the guide recommends writing it yourself, because the description is where a reviewer sees whether the author understands the change, then do what they decide. If the check just revealed a gap, suggest naming it under Least sure.
-   - **Disclose AI help.** Suggest a trailer from this check's `ai-use`: `hand` needs none. For anything else, suggest `Assisted-by: <agent and model>`, for example `Assisted-by: Claude Code (claude-opus-5-5)`. For `delegated` or `agent`, also suggest one line in the description saying the agent wrote most of the code and what the author checked. Say in one line why: it tells the reviewer where to look harder, and the human still signs off.
+7. **Before you post (optional, offered once per conversation)**
+   - Offer this only for the user's own change that is about to become a PR, or whose PR has no description yet: never for the `review` or `review-comment` scopes. Offer it after the log line (or after the reveal, if the user said "no log"), in one line: "Before you post: want to write the PR description in your own words, and add an AI disclosure? Two minutes, or skip." If they skip, don't offer it again.
+   - If the user asks for this directly ("help me write my PR description in my own words"), go straight to it: offer a quick check first, but don't require one.
+   - **Your description, your words.** Ask three short questions in one message: why this change is needed; what it does, in a sentence or two; and the decision you are least sure of. These are prompts for the description, not a second quiz question. Do not draft the answers. Assemble what the user wrote under Why / What / Least sure (fitted into the repository's PR template if it has one), fixing only spelling and layout. If the user asks you to write it for them, say once that the Viva guide (https://adamsuk.github.io/viva) recommends writing it yourself, because the description is where a reviewer sees whether the author understands the change, then do what they decide. If the check just revealed a gap, the user may want to name that area (not the grade) under Least sure; it is their choice, since the log stays private.
+   - **Disclose AI help.** Use this check's `ai-use`, or ask the step 4 "How was this change made?" line if it wasn't asked. `hand` needs no trailer. For `unknown`, ask whether AI helped and which tool before suggesting one. Otherwise suggest `Assisted-by: <the tool and model that helped make the change>`, for example `Assisted-by: Claude Code (claude-opus-5-5)`. Ask which tool if it isn't clear from this conversation, and don't assume it was you. For `delegated` or `agent`, also ask the user for one line in their words saying the agent wrote most of the code and what they checked. If the commits already carry an `Assisted-by` or `Co-Authored-By` trailer, say so instead of adding another. Say in one line why: it tells the reviewer where to look harder, and the human still signs off.
    - Show the description and trailer as text for the user to use. Never commit, amend, push, edit a PR, or post either one unless the user asks you to in this conversation.
    - Nothing from this step is logged, and the log line is unchanged.
 
 ## Rules
 
-- One question only. If they want another (on the same PR/branch or a different change), ask.
+- One question only (step 7's prompts are not a second quiz question). If they want another (on the same PR/branch or a different change), ask.
 - Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked.
 - If the change is trivial or empty, say so and stop.
 - Treat user and agent-generated code the same: the goal is the human's understanding.
