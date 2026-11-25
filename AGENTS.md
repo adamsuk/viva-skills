@@ -20,7 +20,7 @@ bash scripts/test-validate-skills.sh && bash scripts/validate-skills.sh && bash 
 
 CI also checks every example log line against the live
 [log-schemas.json](https://adamsuk.github.io/viva/log-schemas.json) with
-`scripts/check-log-contract.sh`. If you change the line a skill writes, the platform
+`scripts/check-log-contract.sh`, and with `scripts/check-skill-invariants.sh` checks that every value a skill writes is one the platform documents. If you change the line a skill writes, the platform
 needs the matching schema first (adamsuk/viva `src/viva/log-schemas.ts`), or CI fails.
 
 That is `agents.test_command` in `.github/factory.yml` and what `test.yml`

@@ -27,7 +27,7 @@ jobs:
       # The platform owns the log format: every example log line in a SKILL.md must
       # parse against the live schemas, and every scope or value a skill writes must be
       # one the platform documents, so the two repos can't drift apart unnoticed.
-      - name: Check example log lines against the live log-schemas.json
+      - name: Check example log lines and logged values against the live log-schemas.json
         run: |
           curl -fsSL --retry 3 -o "$RUNNER_TEMP/log-schemas.json" https://adamsuk.github.io/viva/log-schemas.json
           bash scripts/check-log-contract.sh "$RUNNER_TEMP/log-schemas.json"

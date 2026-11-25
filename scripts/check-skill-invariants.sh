@@ -42,7 +42,7 @@ def one_of(text, field):
         return None
     return {v.strip().strip("`") for v in values}
 
-schema_fields = {"scope": "scope", "ai-use": "aiUse", "bot-claim": "botClaim"}
+schema_fields = {"scope": "scope", "ai-use": "aiUse", "bot-claim": "botClaim", "live": "live", "grade": "grade"}
 declared = {}
 
 if viva:
@@ -72,8 +72,10 @@ if viva:
             need(f in [x.strip() for x in copied.group(1).split(",")],
                  f"viva: the Corrections rule doesn't say to copy `{f}`")
     # 3. Lines are never rewritten, and the log stays local.
-    need("Never rewrite or reformat earlier lines" in viva, "viva: the never-rewrite rule is missing")
-    need("Nothing is posted, shared or sent anywhere" in viva, "viva: the first-run privacy line is missing")
+    step6 = re.search(r"6\. \*\*Log.*?(?=\n7\. \*\*)", viva, re.S)
+    need(step6 and re.search(r"(never|don't|do not)\W.{0,40}\b(rewrite|reformat)", step6.group(0), re.I),
+         "viva: the never-rewrite rule is missing from step 6")
+    need(re.search(r"nothing is (posted|shared|sent).{0,40}anywhere", viva, re.I), "viva: the first-run privacy line is missing")
     need("practice, not a gate" in viva.lower(), "viva: 'practice, not a gate' is missing")
     # 4. The before-you-post step is never offered for someone else's change or a practice run.
     s7 = re.search(r"7\. \*\*Before you post.*?(?=\n## )", viva, re.S)
@@ -81,21 +83,21 @@ if viva:
     if s7:
         for sc in ("review", "review-comment", "practice"):
             need(f"`{sc}`" in s7.group(0), f"viva: step 7 doesn't exclude the `{sc}` scope")
-        need("Never commit, amend, push, edit a PR, or post" in s7.group(0), "viva: step 7 lost its never-post rule")
+        need(re.search(r"(never|don't|do not)\W.{0,80}\b(post|push)", s7.group(0), re.I), "viva: step 7 lost its never-post rule")
         need("`unknown`" in s7.group(0), "viva: step 7 doesn't say what to do when ai-use is `unknown`")
     # 5. Triggers: asking for a PR description must not start a quiz unless it says "own words".
     desc = re.search(r"^description: (.*)$", viva, re.M)
     if desc:
-        for m in re.finditer(r"PR description", desc.group(1)):
+        for m in re.finditer(r"(PR|pull request) desc", desc.group(1), re.I):
             need("own words" in desc.group(1)[m.start():m.start() + 40] or "own words" in desc.group(1)[max(0, m.start() - 40):m.start()],
                  "viva: a PR-description trigger without 'in my own words' would start a quiz")
     # 6. Practice mode never diffs a merged PR against the current base, and writes its own file.
     pm = re.search(r"\*\*Practice mode\*\*.*?(?=\n2\. \*\*)", viva, re.S)
     need(pm, "viva: the Practice mode section is missing")
     if pm:
-        need("Never diff against `git merge-base`" in pm.group(0), "viva: practice mode doesn't forbid diffing against merge-base")
+        need(re.search(r"(never|don't|do not)\W.{0,40}merge-base", pm.group(0), re.I), "viva: practice mode doesn't forbid diffing against merge-base")
         need("viva-experiment.md" in pm.group(0), "viva: practice mode doesn't name its experiment file")
-        need("append a corrected line" in pm.group(0), "viva: practice mode has no correction rule for the experiment file")
+        need(re.search(r"append.{0,30}correct", pm.group(0), re.I), "viva: practice mode has no correction rule for the experiment file")
     # 7. Every scope the step-1 list offers is one the log line accepts, and the other way round.
     if "scope" in declared:
         step1 = re.search(r"^1\. \*\*Pick the scope\*\*\n(.*?)(?=^2\. )", viva, re.M | re.S)
@@ -109,19 +111,34 @@ if viva:
 if assess:
     for f in ("ai-use", "bot-claim", "`bot`"):
         need(f in assess, f"viva-assess: doesn't read the {f.strip('`')} field")
-    need(re.search(r"later one is a correction|last line", assess), "viva-assess: doesn't apply correction lines (last line per check wins)")
-    need(re.search(r"Drift\.\*\* Leave `practice` checks out", assess), "viva-assess: drift doesn't leave out practice checks")
+    step2 = assess.split("3. **Assess**")[0]
+    need(re.search(r"later one is a correction|last (line|one) (wins|per check)|use only the last", step2, re.I),
+         "viva-assess: doesn't apply correction lines (last line per check wins)")
+    need(re.search(r"drift.{0,200}\b(leave|leaves|left)\b.{0,30}`?practice`?|drift.{0,200}`?practice`?.{0,30}\bout\b", assess, re.I | re.S),
+         "viva-assess: drift doesn't leave out practice checks")
     need("https://adamsuk.github.io/viva" in assess, "viva-assess: the personal map URL is missing")
 
 # 8. With the platform's schemas: every value the skill writes is one the platform documents.
 if schemas and declared.keys() == schema_fields.keys():
-    data = json.loads(pathlib.Path(schemas).read_text())
-    latest = data["schemas"][-1]
-    doc = {f["name"]: f.get("description", "") for f in latest["fields"]}
-    for field, schema_field in schema_fields.items():
-        for v in sorted(declared[field]):
-            need(re.search(r"(^|[\s|:])%s($|[\s|,;])" % re.escape(v), doc.get(schema_field, "")),
-                 f"viva: `{field}` value `{v}` isn't in the platform's {latest['version']} schema ({schema_field})")
+    try:
+        data = json.loads(pathlib.Path(schemas).read_text())
+        schema_list = data["schemas"] if isinstance(data, dict) else data
+        assert isinstance(schema_list, list)
+    except (OSError, ValueError, KeyError, AssertionError):
+        print("cannot read as a log-schemas file", file=sys.stderr); sys.exit(2)
+    # The schema the skill says it writes, not simply the newest: the platform publishes first.
+    wanted = re.search(r"Format \(log schema ([\d.]+)\)", viva)
+    chosen = next((x for x in schema_list if wanted and x.get("version") == wanted.group(1)), None)
+    need(chosen, f"viva: the platform has no schema {wanted.group(1) if wanted else '?'} (the one step 6 names)")
+    if chosen:
+        doc = {f["name"]: f.get("description", "") for f in chosen.get("fields", [])}
+        for field, schema_field in schema_fields.items():
+            # Compare values, not prose: the list is what follows the last colon, split on | or a spaced /.
+            desc = re.sub(r"\([^()]*\)", "", doc.get(schema_field, "")).split(":")[-1]
+            documented = {v.strip().strip("`") for v in re.split(r"\s*\|\s*|\s+/\s+", desc) if v.strip()}
+            for v in sorted(declared.get(field, set())):
+                need(v in documented,
+                     f"viva: `{field}` value `{v}` isn't in the platform's {chosen['version']} schema ({schema_field})")
 
 for f in fails: print(f"FAIL: {f}")
 print(f"ok: skill invariants" if not fails else f"{len(fails)} invariant(s) broken", file=sys.stderr if fails else sys.stdout)

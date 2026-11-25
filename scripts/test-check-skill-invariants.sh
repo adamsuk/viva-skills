@@ -12,7 +12,9 @@ cat > "$ROOT/schemas.json" << 'JSON'
 {"schemas": [{"version": "0.6.0", "skillVersions": "0.6.x", "fields": [
   {"name": "scope", "description": "session | checkout | last-commit | uncommitted | named | review-comment | review | practice"},
   {"name": "aiUse", "description": "How the change was made: hand | explained | generated-then-understood | delegated | agent | unknown"},
-  {"name": "botClaim", "description": "For scope review-comment, whether the bot's claim held: held | partly | wrong | n/a"}
+  {"name": "botClaim", "description": "For scope review-comment, whether the bot's claim held: held | partly | wrong | n/a"},
+  {"name": "live", "description": "live | partly-live | hazard"},
+  {"name": "grade", "description": "understood / partial / missed / disputed (or free text)"}
 ]}]}
 JSON
 
@@ -76,11 +78,55 @@ broken "an empty bot-claim declaration" viva/SKILL.md \
   's.replace(next(line for line in s.splitlines() if "`bot-claim` is one of:" in line), "   - `bot-claim` is one of: (no values).")' \
   "the \`bot-claim\` value list is missing"
 broken "viva-assess counting superseded lines" viva-assess/SKILL.md \
-  's.replace("the later one is a correction", "the later one is another check").replace("use only the last", "count both").replace("the last line is a correction", "count each line")' \
+  's.replace("the later one is a correction", "the later one is another check").replace("use only the last", "count both")' \
   "doesn't apply correction lines"
 broken "viva-assess drift including practice" viva-assess/SKILL.md \
   's.replace("**Drift.** Leave `practice` checks out: they are old PRs, not recent work. ", "**Drift.** ")' \
   "drift doesn't leave out practice checks"
+
+broken "a live value the platform doesn't document" viva/SKILL.md \
+  's.replace("`live` is one of: `live`, `partly-live`", "`live` is one of: `live`, `flaky`, `partly-live`")' \
+  "\`live\` value \`flaky\`"
+broken "a grade the platform doesn't document" viva/SKILL.md \
+  's.replace("`grade` is one of: understood, partial, missed, disputed", "`grade` is one of: understood, great, partial, missed, disputed")' \
+  "\`grade\` value \`great\`"
+broken "a value that only appears in the description's prose" viva/SKILL.md \
+  's.replace("`ai-use` is one of: `hand`,", "`ai-use` is one of: `change`, `hand`,")' \
+  "\`ai-use\` value \`change\`"
+
+# allowed <name> <file> <python expression>: a reasonable rewording still passes
+allowed() {
+  tname=$1; local d="$ROOT/case"; rm -rf "$d"; cp -r "$here/../skills" "$d"
+  python3 - "$d/$2" "$3" <<'PY'
+import sys
+p, expr = sys.argv[1], sys.argv[2]
+s = open(p).read(); t = eval(expr)
+assert t != s, "rewording did nothing"
+open(p, "w").write(t)
+PY
+  out=$(bash "$script" "$d" "$ROOT/schemas.json" 2>&1) || fail "rewording rejected: $out"
+  printf 'ok: %s\n' "$tname"
+}
+allowed "rewording: Oxford comma in the privacy line" viva/SKILL.md 's.replace("Nothing is posted, shared or sent anywhere", "Nothing is posted, shared, or sent anywhere")'
+allowed "rewording: do not diff against merge-base" viva/SKILL.md 's.replace("Never diff against `git merge-base`", "Do not diff against `git merge-base`")'
+allowed "rewording: never rewrite, reformat or delete" viva/SKILL.md 's.replace("Never rewrite or reformat earlier lines", "Never rewrite, reformat or delete earlier lines")'
+
+tname="the schema step 6 names is used, not the newest"
+python3 - "$ROOT/schemas.json" "$ROOT/newer.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1])); new = json.loads(json.dumps(d["schemas"][0]))
+new["version"], new["skillVersions"] = "0.7.0", "0.7.x"
+for f in new["fields"]:
+    if f["name"] == "aiUse": f["description"] = "How: by-hand | with-ai"
+d["schemas"].append(new); json.dump(d, open(sys.argv[2], "w"))
+PY
+out=$(bash "$script" "$here/../skills" "$ROOT/newer.json" 2>&1) || fail "$out"
+printf 'ok: %s\n' "$tname"
+
+tname="a malformed schemas file is bad usage"
+printf 'not json' > "$ROOT/bad.json"
+status=0; bash "$script" "$here/../skills" "$ROOT/bad.json" >/dev/null 2>&1 || status=$?; [[ $status -eq 2 ]] || fail "exit $status"
+printf 'ok: %s\n' "$tname"
 
 tname="bad usage"
 status=0; bash "$script" "$ROOT/nope" >/dev/null 2>&1 || status=$?; [[ $status -eq 2 ]] || fail "missing dir: $status"
