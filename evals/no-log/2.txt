@@ -1,0 +1,1 @@
+It calls get up to 3 times in total, then re-raises the last TimeoutError. Confidence 3. Hand-written. no log
