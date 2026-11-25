@@ -6,6 +6,17 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ### Added
 
+- `scripts/check-skill-invariants.sh` checks rules each SKILL.md must keep beyond frontmatter and versions:
+  - corrections copy every field;
+  - the format and example agree;
+  - the never-rewrite and privacy lines stay;
+  - step 7 excludes someone else's change and practice runs, and never posts;
+  - PR-description triggers say "own words";
+  - practice never diffs against merge-base;
+  - every logged scope is offered;
+  - viva-assess applies corrections and keeps practice out of drift.
+
+  Given the platform's `log-schemas.json`, it also checks that every scope and value the skill writes is one the platform documents. `scripts/test-check-skill-invariants.sh` breaks each rule on a copy of the skills and checks the right failure is reported. Both run in CI and the factory test command, and the live-schema check runs alongside the contract check. Why: every one of these rules was broken this week and caught only by review; now CI catches it ([adamsuk/software-factory#501](https://github.com/adamsuk/software-factory/issues/501), [#25](https://github.com/adamsuk/viva-skills/pull/25)).
 - Scenario evals in `evals/` run the skills in a real agent (`claude -p`, multi-turn) against a fixture repo, with a throwaway HOME. `scripts/check-eval.py` checks what they wrote against the skill's own format line: field count, skill version, full timestamp, grade, and per-scenario fields. There are three scenarios: last commit, "no log" and a wrong CodeRabbit claim. `bash scripts/run-evals.sh` runs them on demand; they cost real usage and aren't run in CI. `scripts/test-check-eval.sh` tests the checker offline. Why: CI checks the instructions, not what an agent does with them. A first run found a real defect, fixed below ([adamsuk/software-factory#501](https://github.com/adamsuk/software-factory/issues/501), [#28](https://github.com/adamsuk/viva-skills/pull/28)).
 
 ### Changed
