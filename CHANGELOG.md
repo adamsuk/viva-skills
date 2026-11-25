@@ -4,6 +4,20 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ## 2026-11-25
 
+### Added
+
+- `scripts/check-skill-invariants.sh` checks rules each SKILL.md must keep beyond frontmatter and versions:
+  - corrections copy every field;
+  - the format and example agree;
+  - the never-rewrite and privacy lines stay;
+  - step 7 excludes someone else's change and practice runs, and never posts;
+  - PR-description triggers say "own words";
+  - practice never diffs against merge-base;
+  - every logged scope is offered;
+  - viva-assess applies corrections and keeps practice out of drift.
+
+  Given the platform's `log-schemas.json`, it also checks that every scope and value the skill writes is one the platform documents. `scripts/test-check-skill-invariants.sh` breaks each rule on a copy of the skills and checks the right failure is reported. Both run in CI and the factory test command, and the live-schema check runs alongside the contract check. Why: every one of these rules was broken this week and caught only by review; now CI catches it ([adamsuk/software-factory#501](https://github.com/adamsuk/software-factory/issues/501), [#25](https://github.com/adamsuk/viva-skills/pull/25)).
+
 ### Changed
 
 - `viva` 0.6.2 has a practice mode. `/viva practice [N]` (default 5) works through your own past merged PRs, newest first, skipping any already checked. Each PR gets the usual single question, logged with scope `practice`. After each reveal it asks whether you had to think or just recalled, and appends that to a separate local file, `~/.agents/viva-experiment.md`. Practice targets each PR's own change (`gh pr diff`), skips PRs already checked under `pr-N` or their branch name, and appends a corrected line to the experiment file when a dispute stands. `viva-assess` 0.4.1 summarises the file on request: think, recall and mixed counts, grades within each (disputed checks left out, the last line per PR wins), and progress toward 20. It leaves practice checks out of drift. This is also release 0.6.2. The log line format is unchanged. Why: Viva's experiment 1 (20 of your own merged PRs; how often did you have to think rather than recall?) meant invoking `/viva` 20 times by hand with nowhere to keep the rating, and `evaluate-it` is the open ground ([adamsuk/software-factory#497](https://github.com/adamsuk/software-factory/issues/497), [#24](https://github.com/adamsuk/viva-skills/pull/24)).
