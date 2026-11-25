@@ -2,6 +2,12 @@
 
 All notable changes to the viva skills are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Each section is the date the change merged (YYYY-MM-DD, Europe/London). Skill versions are in each `SKILL.md` (`metadata.version`).
 
+## 2026-11-25
+
+### Changed
+
+- `viva` 0.6.1 has an optional last step before you post. It offers to help write the PR description in your own words: it asks why, what, and the decision you're least sure of, and tidies only the layout. It also suggests an `Assisted-by` trailer from how the change was made. Nothing is committed, posted or logged unless you ask. This is also release 0.6.1: `VERSION`, and the README's tag and pin examples, move to 0.6.1. Why: the guide's Best-practice recommendations `own-description` (the description is where a reviewer sees whether the author understands the change) and `disclose` (it tells the reviewer where to look harder) had no support in the skills ([adamsuk/software-factory#495](https://github.com/adamsuk/software-factory/issues/495), [#23](https://github.com/adamsuk/viva-skills/pull/23)).
+
 ## 2026-11-24
 
 ### Changed
