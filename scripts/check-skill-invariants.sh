@@ -30,9 +30,27 @@ viva, assess = read("viva"), read("viva-assess")
 
 def one_of(text, field):
     m = re.search(r"`%s` is one of:? ([^\n]*)" % re.escape(field), text)
-    return set(re.findall(r"`?([a-z][a-z-]*|n/a)`?(?=[,.;\s(]|$)", m.group(1).split("(")[0])) if m else None
+    if not m:
+        return None
+    declaration = m.group(1)
+    # Remove explanations without removing values after them, even with nested parentheses.
+    while re.search(r"\([^()]*\)", declaration):
+        declaration = re.sub(r"\([^()]*\)", "", declaration)
+    declaration = re.sub(r"\s+for\b.*", "", declaration).rstrip(" .")
+    values = re.split(r",\s*(?:or\s+)?|\s+or\s+", declaration)
+    if not all(re.fullmatch(r"([a-z][a-z-]*|n/a)|`([a-z][a-z-]*|n/a)`", v.strip()) for v in values):
+        return None
+    return {v.strip().strip("`") for v in values}
+
+schema_fields = {"scope": "scope", "ai-use": "aiUse", "bot-claim": "botClaim"}
+declared = {}
 
 if viva:
+    for field in schema_fields:
+        values = one_of(viva, field)
+        need(values, f"viva: the `{field}` value list is missing or could not be parsed")
+        if values:
+            declared[field] = values
     # 1. The format line and the example have the same number of fields.
     fm = re.search(r"Format \(log schema [\d.]+\): `([^`]*)`", viva)
     ex = re.search(r"Example: `([^`]*)`", viva)
@@ -79,13 +97,14 @@ if viva:
         need("viva-experiment.md" in pm.group(0), "viva: practice mode doesn't name its experiment file")
         need("append a corrected line" in pm.group(0), "viva: practice mode has no correction rule for the experiment file")
     # 7. Every scope the step-1 list offers is one the log line accepts, and the other way round.
-    scopes = one_of(viva, "scope")
-    need(scopes, "viva: the `scope` value list is missing")
-    if scopes:
-        for sc in scopes:
-            step1 = viva.split("2. **Get the target")[0].lower()
-            need(f"**{sc.replace('-', ' ')}" in step1 or f"`{sc}`" in step1,
-                 f"viva: scope `{sc}` is in the log list but not offered in step 1")
+    if "scope" in declared:
+        step1 = re.search(r"^1\. \*\*Pick the scope\*\*\n(.*?)(?=^2\. )", viva, re.M | re.S)
+        labels = re.findall(r"^ +[a-z]\. \*\*([^*\n]+)\*\*:", step1.group(1), re.M) if step1 else []
+        offered = {"-".join(label.lower().removesuffix(" scope").split()) for label in labels}
+        for sc in sorted(declared["scope"] - offered):
+            need(False, f"viva: scope `{sc}` is in the log list but not offered in step 1")
+        for sc in sorted(offered - declared["scope"]):
+            need(False, f"viva: scope `{sc}` is offered in step 1 but not in the log list")
 
 if assess:
     for f in ("ai-use", "bot-claim", "`bot`"):
@@ -95,13 +114,12 @@ if assess:
     need("https://adamsuk.github.io/viva" in assess, "viva-assess: the personal map URL is missing")
 
 # 8. With the platform's schemas: every value the skill writes is one the platform documents.
-if schemas and viva:
+if schemas and declared.keys() == schema_fields.keys():
     data = json.loads(pathlib.Path(schemas).read_text())
     latest = data["schemas"][-1]
     doc = {f["name"]: f.get("description", "") for f in latest["fields"]}
-    for field, schema_field in (("scope", "scope"), ("ai-use", "aiUse"), ("bot-claim", "botClaim")):
-        vals = one_of(viva, field) or set()
-        for v in vals:
+    for field, schema_field in schema_fields.items():
+        for v in sorted(declared[field]):
             need(re.search(r"(^|[\s|:])%s($|[\s|,;])" % re.escape(v), doc.get(schema_field, "")),
                  f"viva: `{field}` value `{v}` isn't in the platform's {latest['version']} schema ({schema_field})")
 

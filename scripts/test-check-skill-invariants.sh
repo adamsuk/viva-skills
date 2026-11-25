@@ -57,6 +57,24 @@ broken "the never-rewrite rule removed" viva/SKILL.md \
 broken "a scope the platform doesn't document" viva/SKILL.md \
   's.replace("review, practice.", "review, practice, pairing.")' \
   "\`pairing\` isn't in the platform's 0.6.0 schema"
+broken "a logged scope absent from the step-1 offers" viva/SKILL.md \
+  's.replace("   h. **Practice**:", "   - **Practice**:")' \
+  "scope \`practice\` is in the log list but not offered in step 1"
+broken "an offered scope absent from the log list" viva/SKILL.md \
+  's.replace("review, practice.", "review.")' \
+  "scope \`practice\` is offered in step 1 but not in the log list"
+broken "an invalid bot-claim fallback after an explanation" viva/SKILL.md \
+  's.replace("), or `n/a` for every other scope", "), or `not-applicable` for every other scope")' \
+  "\`bot-claim\` value \`not-applicable\` isn't in the platform's 0.6.0 schema"
+broken "a missing scope declaration" viva/SKILL.md \
+  's.replace("`scope` is one of:", "`scope` can be:")' \
+  "the \`scope\` value list is missing"
+broken "a missing ai-use declaration" viva/SKILL.md \
+  's.replace("`ai-use` is one of:", "`ai-use` can be:")' \
+  "the \`ai-use\` value list is missing"
+broken "an empty bot-claim declaration" viva/SKILL.md \
+  's.replace(next(line for line in s.splitlines() if "`bot-claim` is one of:" in line), "   - `bot-claim` is one of: (no values).")' \
+  "the \`bot-claim\` value list is missing"
 broken "viva-assess counting superseded lines" viva-assess/SKILL.md \
   's.replace("the later one is a correction", "the later one is another check").replace("use only the last", "count both").replace("the last line is a correction", "count each line")' \
   "doesn't apply correction lines"
