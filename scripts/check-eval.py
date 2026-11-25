@@ -2,7 +2,7 @@
 
 Usage: check-eval.py <viva SKILL.md> <expect.json> <eval HOME> <transcript dir>
 """
-import json, pathlib, re, sys
+import datetime, json, pathlib, re, sys
 
 skill, expect_path, home, out = (pathlib.Path(a) for a in sys.argv[1:5])
 expect = json.loads(expect_path.read_text())
@@ -15,7 +15,7 @@ fails = []
 def turn(i):
     t = out / f"turn{i}.json"
     try:
-        return json.loads(t.read_text() or "{}")
+        return json.loads(t.read_text())
     except (OSError, ValueError):
         fails.append(f"turn{i}.json is missing or not JSON (see turn{i}.err)")
         return {}
@@ -34,7 +34,11 @@ for raw in log:
     row = dict(zip(names, parts))
     if row["skill-version"] != version:
         fails.append(f"skill version {row['skill-version']}, expected {version}")
-    if not re.fullmatch(r"\d{4}-\d\d-\d\d \d\d:\d\d", row["timestamp"]):
+    try:
+        if not re.fullmatch(r"\d{4}-\d\d-\d\d \d\d:\d\d", row["timestamp"]):
+            raise ValueError
+        datetime.datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M")
+    except ValueError:
         fails.append(f"bad timestamp {row['timestamp']!r}")
     if row["grade"] not in ("understood", "partial", "missed", "disputed"):
         fails.append(f"bad grade {row['grade']!r}")

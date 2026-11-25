@@ -32,8 +32,10 @@ for name in "${scenarios[@]}"; do
   HOME="$home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null env -u XDG_CONFIG_HOME bash fixture-repo.sh "$work" \
     || { echo "fixture failed for $name (left in $work, HOME $home)" >&2; exit 2; }
   printf '.claude/\n' >> "$work/.git/info/exclude"
-  mkdir -p "$work/.claude/skills" "$home/.agents" && cp -r "$root/skills/." "$work/.claude/skills/"
-  sid=""; turn=1; cost=0; out_dir="$home/.eval"; mkdir -p "$out_dir"
+  if ! { mkdir -p "$work/.claude/skills" "$home/.agents" && cp -r "$root/skills/." "$work/.claude/skills/"; }; then
+    echo "FAIL: $name (couldn't copy the skills into $work; no agent calls made)" >&2; failed=1; continue
+  fi
+  sid=""; turn=1; cost=0; turn_failed=0; out_dir="$home/.eval"; mkdir -p "$out_dir"
   while [[ -f $name/$turn.txt ]]; do
     args=(-p "$(cat "$name/$turn.txt")" --output-format json --model "$model" --max-turns 25
           --max-budget-usd "$budget" --permission-mode "$mode" --add-dir "$home"
@@ -46,12 +48,15 @@ for name in "${scenarios[@]}"; do
     cost=$(jq -r --arg c "$cost" '($c|tonumber) + (.total_cost_usd // 0)' "$out_dir/turn$turn.json" 2>/dev/null || echo "$cost")
     sid=$(jq -r '.session_id // empty' "$out_dir/turn$turn.json" 2>/dev/null)
     if [[ $rc -ne 0 || -z $sid ]]; then
-      echo "  turn $turn: claude exited $rc${sid:+ (session $sid)}${sid:- with no session}; see $out_dir/turn$turn.err. Stopping this scenario." >&2
-      break
+      who="with no session"; [[ -n $sid ]] && who="(session $sid)"
+      echo "  turn $turn: claude exited $rc $who; see $out_dir/turn$turn.err. Stopping this scenario." >&2
+      turn_failed=1; break
     fi
     turn=$((turn + 1))
   done
-  if python3 "$here/check-eval.py" "$root/skills/viva/SKILL.md" "$name/expect.json" "$home" "$out_dir"; then
+  # A failed turn fails the scenario even if what was written so far passes the checks.
+  if python3 "$here/check-eval.py" "$root/skills/viva/SKILL.md" "$name/expect.json" "$home" "$out_dir" \
+     && [[ $turn_failed -eq 0 ]]; then
     printf 'ok: %s ($%.2f)\n' "$name" "$cost"
   else
     printf 'FAIL: %s ($%.2f; transcripts in %s, repo in %s)\n' "$name" "$cost" "$out_dir" "$work"; failed=1
