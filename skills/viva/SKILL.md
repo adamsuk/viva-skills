@@ -1,9 +1,9 @@
 ---
 name: viva
-description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, or check a CodeRabbit or other bot review comment before passing it on.
+description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, help me write my PR description in my own words, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.6.0"
+  version: "0.6.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -110,10 +110,10 @@ You are helping the user check their own understanding of a recent change. This 
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.0). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.6.0) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.1). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.6.1) as the second field so the platform can dispatch.
    - Format (log schema 0.6.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot`
-   - Example: `2026-11-20 17:25 | 0.6.0 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
+   - Example: `2026-11-20 17:25 | 0.6.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
@@ -125,9 +125,17 @@ You are helping the user check their own understanding of a recent change. This 
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 
+7. **Before you post (optional, offered once per conversation)**
+   - Offer this only for the user's own change that is about to become a PR, or whose PR has no description yet: never for the `review` or `review-comment` scopes. Offer it after the log line (or after the reveal, if the user said "no log"), in one line: "Before you post: want to write the PR description in your own words, and add an AI disclosure? Two minutes, or skip." If they skip, don't offer it again.
+   - If the user asks for this directly ("help me write my PR description in my own words"), offer a quick check first, and if they decline, go straight to the three prompts.
+   - **Your description, your words.** Ask three short questions in one message: why this change is needed; what it does, in a sentence or two; and the decision you are least sure of. These are prompts for the description, not a second quiz question. Do not draft the answers. Assemble what the user wrote under Why / What / Least sure (fitted into the repository's PR template if it has one), fixing only spelling and layout. If the user asks you to write it for them, say once that the Viva guide (https://adamsuk.github.io/viva) recommends writing it yourself, because the description is where a reviewer sees whether the author understands the change, then do what they decide. If the check just revealed a gap, the user may want to name that area (not the grade) under Least sure; it is their choice, since the log stays private.
+   - **Disclose AI help.** Use this check's `ai-use`, or ask the step 4 "How was this change made?" line if it wasn't asked. `hand` needs no trailer. For `unknown` because the user skipped the question, suggest no trailer and say they can add one; if it was just unclear, ask whether AI helped and which tool before suggesting one. Otherwise suggest `Assisted-by: <the tool and model that helped make the change>`, for example `Assisted-by: Claude Code (claude-opus-5-5)`. Ask which tool if it isn't clear from this conversation, and don't assume it was you. For `delegated` or `agent`, also ask the user for one line in their words saying the agent wrote most of the code and what they checked. If the commits already carry an `Assisted-by` or `Co-Authored-By` trailer, say so instead of adding another. Say in one line why: it tells the reviewer where to look harder, and the human still signs off.
+   - Show the description and trailer as text for the user to use. Never commit, amend, push, edit a PR, or post either one unless the user asks you to in this conversation.
+   - Nothing from this step is logged, and the log line is unchanged.
+
 ## Rules
 
-- One question only. If they want another (on the same PR/branch or a different change), ask.
+- One question only (step 7's prompts are not a second quiz question). If they want another (on the same PR/branch or a different change), ask.
 - Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked.
 - If the change is trivial or empty, say so and stop.
 - Treat user and agent-generated code the same: the goal is the human's understanding.

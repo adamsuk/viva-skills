@@ -11,6 +11,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
   - **Check a bot review comment**: point it at a CodeRabbit (or other bot) comment before you forward or act on it; it verifies the claim, then asks whether you could defend or refute it. The verdict and the bot's name are logged as `bot-claim` and `bot`, so viva-assess and the map can show how often each bot's comments held.
   - **Before you approve**: reviewing someone else's or an agent's PR? Ask for one question on it first; anything you couldn't explain is worth asking the author about before approving. Logged with scope `review`.
   - **Re-checks what you missed**: when your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.
+  - **Before you post**: optionally helps you write the PR description in your own words (why, what, and the decision you're least sure of) and suggests an `Assisted-by` trailer from how the change was made. Nothing is posted or committed without you.
   - **How the change was made**: it records `ai-use` (by hand, asked AI why, generated then understood, delegated, built by an agent) so the map can show whether how you use AI tracks your understanding.
 - **viva-assess** — Interpret and assess multiple answers or a log excerpt. Flags confident-wrong cases, thin topics, and suggests next practice steps. Leaves disputed checks out, compares grades by how the change was made, says whether your sure answers were understood more often than unsure ones, and flags it when your latest checks slipped against earlier ones.
 
@@ -54,8 +55,8 @@ These skills can be served over MCP using the Skills extension (SEP-2640) or a h
 ### Versioning
 
 - Each skill has its own `metadata.version` in its SKILL.md. The log line a skill writes carries that version, and the platform's [log-schemas.json](https://adamsuk.github.io/viva/log-schemas.json) says which skill versions each log format covers.
-- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.6.0`).
-- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.6.0` (if your CLI supports `--ref`), or clone that tag.
+- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.6.1`).
+- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.6.1` (if your CLI supports `--ref`), or clone that tag.
 - Update with `npx skills update viva` or by re-installing.
 
 ### Releasing
