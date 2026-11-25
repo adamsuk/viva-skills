@@ -29,7 +29,8 @@ for name in "${scenarios[@]}"; do
   [[ -f $name/expect.json && -f $name/1.txt ]] || { echo "no scenario: $name" >&2; exit 2; }
   home=$(mktemp -d); work=$(mktemp -d)
   # The fixture uses the throwaway HOME too, so your git config (signing, hooks) doesn't apply.
-  HOME="$home" GIT_CONFIG_NOSYSTEM=1 bash fixture-repo.sh "$work" || { echo "fixture failed for $name" >&2; exit 2; }
+  HOME="$home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null env -u XDG_CONFIG_HOME bash fixture-repo.sh "$work" \
+    || { echo "fixture failed for $name (left in $work, HOME $home)" >&2; exit 2; }
   printf '.claude/\n' >> "$work/.git/info/exclude"
   mkdir -p "$work/.claude/skills" "$home/.agents" && cp -r "$root/skills/." "$work/.claude/skills/"
   sid=""; turn=1; cost=0; out_dir="$home/.eval"; mkdir -p "$out_dir"
@@ -42,12 +43,12 @@ for name in "${scenarios[@]}"; do
     (cd "$work" && HOME="$home" env -u CLAUDE_CONFIG_DIR claude "${args[@]}" < /dev/null \
        > "$out_dir/turn$turn.json" 2> "$out_dir/turn$turn.err")
     rc=$?
+    cost=$(jq -r --arg c "$cost" '($c|tonumber) + (.total_cost_usd // 0)' "$out_dir/turn$turn.json" 2>/dev/null || echo "$cost")
     sid=$(jq -r '.session_id // empty' "$out_dir/turn$turn.json" 2>/dev/null)
     if [[ $rc -ne 0 || -z $sid ]]; then
-      echo "  turn $turn: claude exited $rc with no session (see $out_dir/turn$turn.err); stopping this scenario" >&2
+      echo "  turn $turn: claude exited $rc${sid:+ (session $sid)}${sid:- with no session}; see $out_dir/turn$turn.err. Stopping this scenario." >&2
       break
     fi
-    cost=$(jq -r --arg c "$cost" '($c|tonumber) + (.total_cost_usd // 0)' "$out_dir/turn$turn.json" 2>/dev/null || echo "$cost")
     turn=$((turn + 1))
   done
   if python3 "$here/check-eval.py" "$root/skills/viva/SKILL.md" "$name/expect.json" "$home" "$out_dir"; then
