@@ -13,35 +13,48 @@ set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 root="$here/.."
 command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 2; }
+command -v jq >/dev/null || { echo "jq not found" >&2; exit 2; }
 model="${EVAL_MODEL:-sonnet}"
 budget="${EVAL_BUDGET_USD:-1}"
 mode="${EVAL_PERMISSION_MODE:-acceptEdits}"
 cd "$root/evals" || exit 2
 scenarios=("$@")
-[[ ${#scenarios[@]} -gt 0 ]] || mapfile -t scenarios < <(find . -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+if [[ ${#scenarios[@]} -eq 0 ]]; then
+  for d in */; do [[ -f $d/expect.json ]] && scenarios+=("${d%/}"); done
+fi
+[[ ${#scenarios[@]} -gt 0 ]] || { echo "no scenarios found in evals/" >&2; exit 2; }
 
 failed=0
 for name in "${scenarios[@]}"; do
   [[ -f $name/expect.json && -f $name/1.txt ]] || { echo "no scenario: $name" >&2; exit 2; }
   home=$(mktemp -d); work=$(mktemp -d)
-  bash fixture-repo.sh "$work"
+  # The fixture uses the throwaway HOME too, so your git config (signing, hooks) doesn't apply.
+  HOME="$home" GIT_CONFIG_NOSYSTEM=1 bash fixture-repo.sh "$work" || { echo "fixture failed for $name" >&2; exit 2; }
+  printf '.claude/\n' >> "$work/.git/info/exclude"
   mkdir -p "$work/.claude/skills" "$home/.agents" && cp -r "$root/skills/." "$work/.claude/skills/"
   sid=""; turn=1; cost=0; out_dir="$home/.eval"; mkdir -p "$out_dir"
   while [[ -f $name/$turn.txt ]]; do
     args=(-p "$(cat "$name/$turn.txt")" --output-format json --model "$model" --max-turns 25
           --max-budget-usd "$budget" --permission-mode "$mode" --add-dir "$home"
-          --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git *),Bash(ls *),Bash(date *),Bash(python3 *)"
+          --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git *),Bash(date *),Bash(python3 *)"
           --append-system-prompt "This is a scripted test run. Your home directory is $home. Create or change files only with the Write and Edit tools (use the absolute path $home/.agents/viva-log.md for the log, never ~), and keep Bash to single git, date or python3 commands.")
     [[ -n $sid ]] && args+=(--resume "$sid")
-    (cd "$work" && HOME="$home" claude "${args[@]}" < /dev/null > "$out_dir/turn$turn.json" 2> "$out_dir/turn$turn.err")
-    sid=$(jq -r '.session_id // empty' "$out_dir/turn$turn.json")
-    cost=$(jq -r --arg c "$cost" '($c|tonumber) + (.total_cost_usd // 0)' "$out_dir/turn$turn.json")
+    (cd "$work" && HOME="$home" env -u CLAUDE_CONFIG_DIR claude "${args[@]}" < /dev/null \
+       > "$out_dir/turn$turn.json" 2> "$out_dir/turn$turn.err")
+    rc=$?
+    sid=$(jq -r '.session_id // empty' "$out_dir/turn$turn.json" 2>/dev/null)
+    if [[ $rc -ne 0 || -z $sid ]]; then
+      echo "  turn $turn: claude exited $rc with no session (see $out_dir/turn$turn.err); stopping this scenario" >&2
+      break
+    fi
+    cost=$(jq -r --arg c "$cost" '($c|tonumber) + (.total_cost_usd // 0)' "$out_dir/turn$turn.json" 2>/dev/null || echo "$cost")
     turn=$((turn + 1))
   done
   if python3 "$here/check-eval.py" "$root/skills/viva/SKILL.md" "$name/expect.json" "$home" "$out_dir"; then
     printf 'ok: %s ($%.2f)\n' "$name" "$cost"
   else
-    printf 'FAIL: %s ($%.2f; transcripts in %s)\n' "$name" "$cost" "$out_dir"; failed=1; KEEP=1
+    printf 'FAIL: %s ($%.2f; transcripts in %s, repo in %s)\n' "$name" "$cost" "$out_dir" "$work"; failed=1
+    continue   # keep this scenario's temp dirs for inspection
   fi
   [[ ${KEEP:-} == 1 ]] || rm -rf "$home" "$work"
 done

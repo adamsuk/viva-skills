@@ -25,4 +25,6 @@ tname="a missing field fails"; setup "${good% | coderabbit}"; run
 [[ $status -eq 1 ]] && grep -q "fields, format has" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="no first-run notice fails"; setup "$good" "hello"; run
 [[ $status -eq 1 ]] && grep -q "didn't mention" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a crashed turn is reported, not a traceback"; setup "$good"; printf 'not json' > "$ROOT/h/.eval/turn1.json"; run
+[[ $status -eq 1 ]] && grep -q "turn1.json is missing or not JSON" <<< "$out" && ! grep -q Traceback <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 printf 'ok: check-eval\n'

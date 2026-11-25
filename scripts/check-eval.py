@@ -12,6 +12,14 @@ fmt = re.search(r"Format \(log schema [\d.]+\): `([^`]*)`", text).group(1).split
 names = [{"YYYY-MM-DD HH:MM": "timestamp", "short-topic": "topic"}.get(f, f) for f in fmt]
 fails = []
 
+def turn(i):
+    t = out / f"turn{i}.json"
+    try:
+        return json.loads(t.read_text() or "{}")
+    except (OSError, ValueError):
+        fails.append(f"turn{i}.json is missing or not JSON (see turn{i}.err)")
+        return {}
+
 def lines(p):
     return [l for l in p.read_text().splitlines() if l.strip() and not l.startswith("#")] if p.exists() else []
 
@@ -39,16 +47,15 @@ if len(exp) != expect.get("experiment_lines", 0):
     fails.append(f"expected {expect.get('experiment_lines', 0)} experiment line(s), found {len(exp)}")
 
 for i, needles in ((1, expect.get("said_turn1", [])),):
-    t = out / f"turn{i}.json"
-    said = json.loads(t.read_text()).get("result", "") if t.exists() else ""
+    said = turn(i).get("result", "") if needles else ""
     for n in needles:
         if n not in said:
             fails.append(f"turn {i} didn't mention {n!r}")
 
 for t in sorted(out.glob("turn*.json")):
-    d = json.loads(t.read_text() or "{}")
+    d = turn(t.stem[4:])
     if d.get("is_error"):
-        fails.append(f"{t.name}: the agent run ended in an error ({d.get('subtype')})")
+        fails.append(f"{t.name}: the agent run ended in an error ({d.get('subtype')}: {str(d.get('result', ''))[:120]})")
 
 for f in fails:
     print(f"  - {f}")

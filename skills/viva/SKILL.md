@@ -124,7 +124,7 @@ You are helping the user check their own understanding of a recent change. This 
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
    - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.3). Fall back to the format below if the fetch fails.
    - Include the skill version from the frontmatter (currently 0.6.3) as the second field so the platform can dispatch.
-   - Always write the full `YYYY-MM-DD HH:MM` timestamp, in local time: get it from `date` if you can, otherwise ask the user. Never leave the time out, even when printing the line instead of writing it.
+   - Always write the full `YYYY-MM-DD HH:MM` timestamp, in local time: get it from `date` if you can, otherwise ask the user. Never leave the time out, even when printing the line instead of writing it. (A correction line copies the earlier line's timestamp instead; see Corrections.)
    - Format (log schema 0.6.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot`
    - Example: `2026-11-20 17:25 | 0.6.3 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).

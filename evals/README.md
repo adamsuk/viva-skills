@@ -1,7 +1,7 @@
 # Scenario evals
 
 These run the skills in a real agent (Claude Code, headless) and check what they write. CI's
-invariant checks (`scripts/check-skill-invariants.sh`) cover the instructions; these cover the
+invariant checks (`scripts/check-skill-invariants.sh`, from #25) cover the instructions; these cover the
 behaviour.
 
 ```bash
@@ -16,11 +16,11 @@ the repo's `.claude/skills/`. Turns run in order with `claude -p` and `--resume`
 skill version, timestamp, grade, and the fields in `expect.json`), the experiment file, and what
 the agent said.
 
-- Needs the `claude` CLI, signed in or with `ANTHROPIC_API_KEY`. It costs real usage: about
+- Needs the `claude` CLI and `jq`. Each scenario overrides HOME, so a sign-in stored under `~/.claude` may not carry over: set `ANTHROPIC_API_KEY` (or point `CLAUDE_CONFIG_DIR` at your config, which the runner otherwise unsets so your own skills and hooks stay out). It costs real usage: about
   $0.20–0.30 per scenario with the default model (`EVAL_MODEL=sonnet`).
 - `EVAL_BUDGET_USD` caps each call (default 1). `EVAL_PERMISSION_MODE` defaults to `acceptEdits`;
-  the agent may use Write/Edit and single `git`, `date`, `ls` or `python3` commands.
-- `KEEP=1` keeps the temp dirs; a failing scenario always keeps them and prints where.
+  the agent may use Write/Edit and single `git`, `date` or `python3` commands. `python3` can still reach outside the temp dirs by absolute path; run evals only on skills you trust.
+- `KEEP=1` keeps every scenario's temp dirs; a failing scenario always keeps its own and prints where.
 
 ## Scenarios
 
