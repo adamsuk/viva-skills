@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.4.0"
+  version: "0.4.1"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -56,6 +56,11 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Do not invent metrics or claim this proves understanding. A model can answer most of these questions; the value is the human's practice.
    - Always mention the source (local file, browser map, or paste).
    - **Required:** End the report with this exact sentence (or equivalent that includes the full URL): "You can also open the personal map at https://adamsuk.github.io/viva and drop the same log file (or paste an export) to see the interactive topic view."
+
+4a. **Experiment 1 (only if asked)**
+   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence`).
+   - Report the counts of think / recall / mixed (and skips), and how many of the 20 are done. Give the understood count within each of think, recall and mixed, and say plainly what it suggests: questions that made the user think are the ones doing the practice. Small numbers are a sketch, not a result.
+   - Offer to format it as a row for the Log table in Viva's EXPERIMENTS.md, but don't post or commit it.
 
 5. **Stay private**
    - Do not post, share, or store the answers beyond the local file, browser map, or conversation unless the user explicitly asks.

@@ -1,9 +1,9 @@
 ---
 name: viva
-description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, help me write my PR description in my own words, or check a CodeRabbit or other bot review comment before passing it on.
+description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, help me write my PR description in my own words, practice on my past PRs, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.6.1"
+  version: "0.6.2"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -31,6 +31,7 @@ You are helping the user check their own understanding of a recent change. This 
    e. **Named**: anything the user names or passes as an argument (PR number/URL, commit, range, file, path). A named target is used as-is with no confirmation.
    f. **Review comment**: a bot's review comment (CodeRabbit, Copilot, a review agent, or a pasted one) that the user plans to forward, repost, or act on. Use this scope whenever the user points at a review comment rather than a change. See "Review-comment scope" below.
    g. **Review**: a PR someone else or an agent wrote, which the user is about to review or approve. Use it when the user says so ("before I approve #N", "quiz me on this PR I'm reviewing"). Never pick it on your own for the user's own PR. See "Review scope" below.
+   h. **Practice**: the user's own past merged PRs, one at a time, for deliberate practice and for Viva's experiment 1. Use it only when the user asks ("/viva practice", "/viva practice 10", "practice on my past PRs"). See "Practice mode" below.
 
    - Never silently choose the checkout over the session. If the session scope and the checkout scope differ (different branch, different PR, or the checkout moved), say so and ask with a short options list (e.g. "Session: PR #2107 (dependabot/…)", "Checkout: <branch> @ <sha>", "Last commit: <sha>", "Uncommitted changes", "Other").
    - If there is no session scope, or the only available scopes agree, do not ask: state the choice and carry on.
@@ -48,6 +49,14 @@ You are helping the user check their own understanding of a recent change. This 
    - The target is the whole PR against its base, read from the PR head as for a bound PR. The user didn't write it, so ask about its key behaviour: the thing the reviewer would need to explain to the author to stand behind an approval.
    - The reveal says once that this is practice, not an approval gate, and that anything the user couldn't explain is worth asking the author (or the agent) about before approving.
    - Log with scope `review` and the PR as `branch-or-pr`. For `ai-use`, record how the PR was made if it is clear (built by an agent → `agent`); otherwise `unknown`. Don't ask the user how they made a change they didn't make.
+
+   **Practice mode** (experiment 1: one question on each of 20 of your own merged PRs; how often did you have to think rather than recall?):
+   - List the user's merged PRs in the current repository, newest first (`gh pr list --author @me --state merged --limit 50`, or the git history if `gh` isn't available). Skip any PR already checked: one in `~/.agents/viva-log.md` with this repo and `pr-N` as its branch-or-pr, or one in `~/.agents/viva-experiment.md`. Read only those fields.
+   - Take up to N this session (the number the user gave, default 5). Say how many are left to reach 20 for the experiment, and which PR comes first.
+   - Do one PR at a time, with the normal steps 2 to 6. The target is the whole PR against its base at its merge commit. Log with scope `practice` and the PR as `branch-or-pr`.
+   - After the reveal (and any dispute), ask one more line: "Did you have to think this through, or did you recall it? think / recall / mixed / skip". Append one line to `~/.agents/viva-experiment.md` (create it if needed, with a first line `# viva experiment 1: think or recall`): `YYYY-MM-DD HH:MM | repo | pr-N | think-or-recall | grade | confidence`, using `skip` if they skip. Never rewrite earlier lines. "No log" skips this file too. It stays on the device, like the log.
+   - Then offer the next PR, or stop. Stop at once if the user says so; never go past N without asking.
+   - The first time this file is created, say in one line what it keeps and why: one line per practice PR, so the user can see how often a question made them think rather than recall. It stays until they delete it.
 
 2. **Get the target and verify live code**
    - Read the diff and the relevant surrounding code at the target ref. Keep the scope small enough for one good question.
@@ -110,12 +119,12 @@ You are helping the user check their own understanding of a recent change. This 
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.1). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.6.1) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.2). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.6.2) as the second field so the platform can dispatch.
    - Format (log schema 0.6.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot`
-   - Example: `2026-11-20 17:25 | 0.6.1 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
+   - Example: `2026-11-20 17:25 | 0.6.2 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
-   - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review.
+   - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review, practice.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - `ai-use` is one of: `hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`.
    - `bot-claim` is one of: `held`, `partly`, `wrong` (review-comment scope only: whether the bot's claim held when you checked it against the code), or `n/a` for every other scope.
@@ -135,7 +144,7 @@ You are helping the user check their own understanding of a recent change. This 
 
 ## Rules
 
-- One question only (step 7's prompts are not a second quiz question). If they want another (on the same PR/branch or a different change), ask.
+- One question only per change (step 7's prompts are not a second quiz question; in practice mode each PR gets its own single question, and the user chooses whether to go on). If they want another (on the same PR/branch or a different change), ask.
 - Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked.
 - If the change is trivial or empty, say so and stop.
 - Treat user and agent-generated code the same: the goal is the human's understanding.
