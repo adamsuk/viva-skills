@@ -1,0 +1,1 @@
+Dispute: the commit message says at most 5 attempts, but fetch.py has MAX_ATTEMPTS = 3, so get is called 3 times, not 5. Your question took its premise from the message, not the code. Please log it as disputed.

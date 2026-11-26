@@ -9,7 +9,7 @@ bash scripts/run-evals.sh                 # every scenario
 bash scripts/run-evals.sh review-comment  # one
 ```
 
-Each scenario gets a throwaway git repo (`evals/fixture-repo.sh`: a bounded-retry commit) and a
+Each scenario gets a throwaway git repo (`evals/fixture-repo.sh`: a bounded-retry commit, unless the scenario has its own) and a
 throwaway HOME, so your own `~/.agents/viva-log.md` is never touched. The skills are copied into
 the repo's `.claude/skills/`. Turns run in order with `claude -p` and `--resume`; then
 `scripts/check-eval.py` checks the log lines against the skill's own format line (field count,
@@ -22,6 +22,9 @@ the agent said.
   the agent may use Write/Edit and single `git`, `date` or `python3` commands. `python3` can still reach outside the temp dirs by absolute path; run evals only on skills you trust.
 - `KEEP=1` keeps every scenario's temp dirs; a failing scenario always keeps its own and prints where.
 - A turn that fails (non-zero exit or no session) fails its scenario, even if what was written so far passes the checks.
+- `EVAL_MAX_TOTAL_USD` caps the whole run (default 5): once it is spent no further call starts, and the run fails.
+- A scenario may have its own `fixture-repo.sh` (used instead of the shared one) and a `bin/` of stub commands that go first on PATH. With a `bin/`, the agent may also run `gh`.
+- CI: the **Evals** workflow (`.github/workflows/evals.yml`) runs `scripts/run-evals.sh` on `workflow_dispatch` only. It skips itself unless the `ANTHROPIC_API_KEY` secret is set, never runs on a fork, and takes a per-call budget and a run-wide cap as inputs (defaults $1 and $3). The key is in the environment of the run step only.
 - `bash scripts/test-check-eval.sh` tests the checker and the runner offline, with a stand-in for `claude`: no agent, no cost. Run it after changing either.
 
 ## Scenarios
@@ -30,7 +33,9 @@ the agent said.
 |---|---|---|
 | `last-commit` | `/viva check my last commit`, then an answer with confidence and "by hand" | first-run notice names the log; one 13-field line, current version, scope last-commit, ai-use hand, bot fields n/a, live partly-live or hazard (`fetch` has no caller) |
 | `no-log` | the same, answering with "no log" | nothing written |
+| `dispute-after-log` | a last-commit check whose commit message says "at most 5 attempts" while the code has `MAX_ATTEMPTS = 3`, an answer, then a dispute naming the mismatch | the line written after turn 2 is byte-for-byte unchanged; one correction line follows with every field the same except grade `disputed` |
+| `practice` | `/viva practice 1` against a fixture repo with a merge commit (PR #7) and a stub `gh` (`evals/practice/bin/gh`) answering `pr list` and `pr diff`; an answer; "I had to think it through" | one `practice` log line for `pr-7`, and one experiment-file line with value `think` that agrees with it on time, repo, PR, grade and confidence |
 | `review-comment` | a CodeRabbit comment whose claim is wrong, then a correct rejection | one line with scope review-comment, bot-claim wrong, bot coderabbit, grade understood |
 
 Add one by creating `evals/<name>/` with `1.txt`, `2.txt`, … (one user turn each) and an
-`expect.json` (`lines`, `fields`, `experiment_lines`, `said_turn1`).
+`expect.json` (`lines`, `fields`, `experiment_lines`, `experiment_fields`, `said_turn1`, and `correction` with `after_turn` to check that the log line written after that turn is unchanged and one `disputed` correction follows).
