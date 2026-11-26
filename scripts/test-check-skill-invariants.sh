@@ -9,12 +9,14 @@ trap 'rm -rf "$ROOT"' EXIT
 fail() { printf 'FAIL: %s: %s\n' "$tname" "$1" >&2; exit 1; }
 
 cat > "$ROOT/schemas.json" << 'JSON'
-{"schemas": [{"version": "0.6.0", "skillVersions": "0.6.x", "fields": [
+{"schemas": [{"version": "0.7.0", "skillVersions": "0.7.x", "fields": [
   {"name": "scope", "description": "session | checkout | last-commit | uncommitted | named | review-comment | review | practice"},
   {"name": "aiUse", "description": "How the change was made: hand | explained | generated-then-understood | delegated | agent | unknown"},
   {"name": "botClaim", "description": "For scope review-comment, whether the bot's claim held: held | partly | wrong | n/a"},
   {"name": "live", "description": "live | partly-live | hazard"},
-  {"name": "grade", "description": "understood / partial / missed / disputed (or free text)"}
+  {"name": "grade", "description": "understood / partial / missed / disputed (or free text)"},
+  {"name": "style", "description": "Which kind of question was asked: scenario | decision"},
+  {"name": "risk", "description": "The change's risk tier when risk tiers are on: low | normal | high | n/a (n/a when they are off)"}
 ]}]}
 JSON
 
@@ -42,8 +44,14 @@ broken "step 7 offered for practice runs" viva/SKILL.md \
   's.replace("`review`, `review-comment` or `practice` scopes", "`review` or `review-comment` scopes")' \
   "step 7 doesn't exclude the \`practice\` scope"
 broken "a correction that drops the bot field" viva/SKILL.md \
-  's.replace("ai-use, bot-claim, bot)", "ai-use, bot-claim)")' \
+  's.replace("bot-claim, bot, style, risk)", "bot-claim, style, risk)")' \
   "Corrections rule doesn't say to copy \`bot\`"
+broken "a correction that drops the risk field" viva/SKILL.md \
+  's.replace("bot, style, risk)", "bot, style)")' \
+  "Corrections rule doesn't say to copy \`risk\`"
+broken "a style the platform doesn't document" viva/SKILL.md \
+  's.replace("`scenario`, `decision` (the kind", "`scenario`, `decision`, `riddle` (the kind")' \
+  "\`style\` value \`riddle\` isn't in the platform's 0.7.0 schema"
 broken "a bare PR-description trigger" viva/SKILL.md \
   's.replace("help me write my PR description in my own words", "write my PR description")' \
   "would start a quiz"
@@ -51,14 +59,14 @@ broken "practice diffing a merged PR against merge-base" viva/SKILL.md \
   's.replace("Never diff against `git merge-base`", "Diff against `git merge-base`")' \
   "doesn't forbid diffing against merge-base"
 broken "an example with a field the format doesn't have" viva/SKILL.md \
-  's.replace("| n/a | n/a`", "| n/a | n/a | extra`", 1)' \
+  's.replace("| scenario | n/a`", "| scenario | n/a | extra`", 1)' \
   "fields but the Example has"
 broken "the never-rewrite rule removed" viva/SKILL.md \
   's.replace("Never rewrite or reformat earlier lines", "Tidy earlier lines")' \
   "never-rewrite rule is missing"
 broken "a scope the platform doesn't document" viva/SKILL.md \
   's.replace("review, practice.", "review, practice, pairing.")' \
-  "\`pairing\` isn't in the platform's 0.6.0 schema"
+  "\`pairing\` isn't in the platform's 0.7.0 schema"
 broken "a logged scope absent from the step-1 offers" viva/SKILL.md \
   's.replace("   h. **Practice**:", "   - **Practice**:")' \
   "scope \`practice\` is in the log list but not offered in step 1"
@@ -67,7 +75,7 @@ broken "an offered scope absent from the log list" viva/SKILL.md \
   "scope \`practice\` is offered in step 1 but not in the log list"
 broken "an invalid bot-claim fallback after an explanation" viva/SKILL.md \
   's.replace("), or `n/a` for every other scope", "), or `not-applicable` for every other scope")' \
-  "\`bot-claim\` value \`not-applicable\` isn't in the platform's 0.6.0 schema"
+  "\`bot-claim\` value \`not-applicable\` isn't in the platform's 0.7.0 schema"
 broken "a missing scope declaration" viva/SKILL.md \
   's.replace("`scope` is one of:", "`scope` can be:")' \
   "the \`scope\` value list is missing"
@@ -115,7 +123,7 @@ tname="the schema step 6 names is used, not the newest"
 python3 - "$ROOT/schemas.json" "$ROOT/newer.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1])); new = json.loads(json.dumps(d["schemas"][0]))
-new["version"], new["skillVersions"] = "0.7.0", "0.7.x"
+new["version"], new["skillVersions"] = "0.8.0", "0.8.x"
 for f in new["fields"]:
     if f["name"] == "aiUse": f["description"] = "How: by-hand | with-ai"
 d["schemas"].append(new); json.dump(d, open(sys.argv[2], "w"))

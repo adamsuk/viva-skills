@@ -42,7 +42,7 @@ def one_of(text, field):
         return None
     return {v.strip().strip("`") for v in values}
 
-schema_fields = {"scope": "scope", "ai-use": "aiUse", "bot-claim": "botClaim", "live": "live", "grade": "grade"}
+schema_fields = {"scope": "scope", "ai-use": "aiUse", "bot-claim": "botClaim", "live": "live", "grade": "grade", "style": "style", "risk": "risk"}
 declared = {}
 
 if viva:

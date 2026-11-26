@@ -12,7 +12,7 @@ J
 setup() { rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$1" > "$ROOT/h/.agents/viva-log.md"
   printf '{"result": "%s", "is_error": false}\n' "${2:-kept in ~/.agents/viva-log.md}" > "$ROOT/h/.eval/turn1.json"; }
 run() { status=0; out=$(python3 "$here/check-eval.py" "$skill" "$ROOT/expect.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?; }
-good="2026-11-25 10:30 | $ver | o/r | pr-1 | abc | retry bound | 4 | understood | review-comment | live | unknown | wrong | coderabbit"
+good="2026-11-25 10:30 | $ver | o/r | pr-1 | abc | retry bound | 4 | understood | review-comment | live | unknown | wrong | coderabbit | scenario | n/a"
 
 tname="a correct line passes"; setup "$good"; run; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a line without the time fails"; setup "${good/10:30 /}"; run
@@ -21,7 +21,7 @@ tname="a wrong verdict fails"; setup "${good/| wrong |/| held |}"; run
 [[ $status -eq 1 ]] && grep -q "bot-claim" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="an old skill version fails"; setup "${good/| $ver |/| 0.0.1 |}"; run
 [[ $status -eq 1 ]] && grep -q "skill version" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
-tname="a missing field fails"; setup "${good% | coderabbit}"; run
+tname="a missing field fails"; setup "${good% | n/a}"; run
 [[ $status -eq 1 ]] && grep -q "fields, format has" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="no first-run notice fails"; setup "$good" "hello"; run
 [[ $status -eq 1 ]] && grep -q "didn't mention" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
@@ -37,7 +37,7 @@ tname="an empty later turn fails"; setup "$good"; : > "$ROOT/h/.eval/turn2.json"
 cat > "$ROOT/expect-dispute.json" <<'J'
 {"lines": 2, "correction": {"after_turn": 2}, "fields": {"scope": ["last-commit"]}}
 J
-orig="2026-11-25 10:30 | $ver | o/r | main | abc | retry count | 3 | missed | last-commit | partly-live | hand | n/a | n/a"
+orig="2026-11-25 10:30 | $ver | o/r | main | abc | retry count | 3 | missed | last-commit | partly-live | hand | n/a | n/a | scenario | n/a"
 fixd() { # fixd <final log lines...>: the log after turn 2 holds $orig; the final log is the arguments
   rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$orig" > "$ROOT/h/.eval/log-after-turn2.md"
   printf '%s\n' "$@" > "$ROOT/h/.agents/viva-log.md"; printf '{"result": "x", "is_error": false}\n' > "$ROOT/h/.eval/turn1.json"; }
@@ -63,7 +63,7 @@ tname="a missing snapshot fails"; fixd "$orig" "$dgood"; rm "$ROOT/h/.eval/log-a
 cat > "$ROOT/expect-practice.json" <<'J'
 {"lines": 1, "fields": {"scope": ["practice"], "branch-or-pr": ["pr-7"]}, "experiment_lines": 1, "experiment_fields": {"think-or-recall": ["think"]}}
 J
-plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a"
+plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a | scenario | n/a"
 pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4 | S | 5 | backend"
 prun() { # prun <log line> <experiment line or empty> [extra expect.json keys]
   jq -s add "$ROOT/expect-practice.json" <(printf '%s' "${3:-{\}}") > "$ROOT/expect-run.json"

@@ -10,13 +10,15 @@ trap 'rm -rf "$ROOT"' EXIT
 fail() { printf 'FAIL: %s: %s\n' "$tname" "$1" >&2; exit 1; }
 run() { status=0; out=$(bash "$script" "$@" 2>&1) || status=$?; }
 
-# Four formats: 0.3.1 (10 fields) covers 0.3.x; 0.4.0 (11) 0.4.x; 0.5.0 (12) 0.5.x; 0.6.0 (13) 0.6.x.
+# Five formats: 0.3.1 (10 fields) covers 0.3.x; 0.4.0 (11) 0.4.x; 0.5.0 (12) 0.5.x; 0.6.0 (13) 0.6.x;
+# 0.7.0 (15) 0.7.x.
 cat > "$ROOT/schemas.json" << 'JSON'
 {"schemas": [
   {"version": "0.3.1", "skillVersions": "0.3.x", "fields": [1,2,3,4,5,6,7,8,9,10]},
   {"version": "0.4.0", "skillVersions": "0.4.x", "fields": [1,2,3,4,5,6,7,8,9,10,11]},
   {"version": "0.5.0", "skillVersions": "0.5.x", "fields": [1,2,3,4,5,6,7,8,9,10,11,12]},
-  {"version": "0.6.0", "skillVersions": "0.6.x", "fields": [1,2,3,4,5,6,7,8,9,10,11,12,13]}
+  {"version": "0.6.0", "skillVersions": "0.6.x", "fields": [1,2,3,4,5,6,7,8,9,10,11,12,13]},
+  {"version": "0.7.0", "skillVersions": "0.7.x", "fields": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}
 ]}
 JSON
 
@@ -46,9 +48,9 @@ run "$ROOT/schemas.json" "$d"; [[ $status -eq 0 ]] || fail "exit $status: $out"
 printf 'ok: %s\n' "$tname"
 
 tname="no schema covers the version"
-d=$(case_dir uncovered); skill "$d" "${L10/VER/0.7.0}"
+d=$(case_dir uncovered); skill "$d" "${L10/VER/0.8.0}"
 run "$ROOT/schemas.json" "$d"; [[ $status -eq 1 ]] || fail "exit $status"
-grep -qF 'demo/SKILL.md:5: no schema covers version 0.7.0' <<< "$out" || fail "$out"
+grep -qF 'demo/SKILL.md:5: no schema covers version 0.8.0' <<< "$out" || fail "$out"
 printf 'ok: %s\n' "$tname"
 
 tname="wrong field count for the covering schema"
@@ -59,9 +61,9 @@ printf 'ok: %s\n' "$tname"
 
 tname="an example line outside inline code is still checked"
 d=$(case_dir plain); mkdir -p "$d/demo"
-printf -- '---\nname: demo\n---\n\n```\n%s\n```\n' "${L10/VER/0.7.0}" > "$d/demo/SKILL.md"
+printf -- '---\nname: demo\n---\n\n```\n%s\n```\n' "${L10/VER/0.8.0}" > "$d/demo/SKILL.md"
 run "$ROOT/schemas.json" "$d"; [[ $status -eq 1 ]] || fail "exit $status: $out"
-grep -qF 'no schema covers version 0.7.0' <<< "$out" || fail "$out"
+grep -qF 'no schema covers version 0.8.0' <<< "$out" || fail "$out"
 printf 'ok: %s\n' "$tname"
 
 tname="finding no example lines fails"
