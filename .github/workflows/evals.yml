@@ -49,7 +49,8 @@ jobs:
       # The API key is not in the environment of this step: only the run step below sees it.
       - name: Install the claude CLI
         if: steps.key.outputs.enabled == 'true'
-        run: npm install --global @anthropic-ai/claude-code
+        # Pinned to an exact version: the next step hands this CLI the API key.
+        run: npm install --global @anthropic-ai/claude-code@2.1.322
       - name: Run the scenario evals
         if: steps.key.outputs.enabled == 'true'
         env:

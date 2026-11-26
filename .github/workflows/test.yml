@@ -24,6 +24,7 @@ jobs:
       - run: bash scripts/test-hook.sh
       - run: bash scripts/test-check-skill-invariants.sh
       - run: bash scripts/check-skill-invariants.sh
+      - run: bash scripts/test-check-eval.sh
       # The platform owns the log format: every example log line in a SKILL.md must
       # parse against the live schemas, and every scope or value a skill writes must be
       # one the platform documents, so the two repos can't drift apart unnoticed.
