@@ -46,9 +46,47 @@ for raw in log:
         if row.get(field) not in allowed:
             fails.append(f"{field} = {row.get(field)!r}, expected one of {allowed}")
 
+corr = expect.get("correction")
+if corr:
+    # The check was logged after turn N and disputed later: that line must be byte-for-byte unchanged,
+    # with one correction line after it. Same check, same fields, grade disputed.
+    before = lines(out / f"log-after-turn{corr['after_turn']}.md")
+    if len(before) != 1:
+        fails.append(f"expected 1 log line after turn {corr['after_turn']}, found {len(before)}")
+    elif log[:1] != before:
+        fails.append(f"the original log line was changed: {before[0]!r} is now {log[:1]!r}")
+    elif len(log) == 2 and all(len(r.split(" | ")) == len(names) for r in log):
+        old, new = (dict(zip(names, [p.strip() for p in r.split(" | ")])) for r in log)
+        if old["grade"] == "disputed":
+            fails.append("the original line already says disputed; the dispute came after it")
+        if new["grade"] != "disputed":
+            fails.append(f"the correction's grade is {new['grade']!r}, expected 'disputed'")
+        for f in names:
+            if f not in ("skill-version", "grade") and old[f] != new[f]:
+                fails.append(f"the correction changed {f}: {old[f]!r} became {new[f]!r}")
+
 exp = lines(home / ".agents/viva-experiment.md")
 if len(exp) != expect.get("experiment_lines", 0):
     fails.append(f"expected {expect.get('experiment_lines', 0)} experiment line(s), found {len(exp)}")
+if "experiment_fields" in expect:
+    # timestamp | repo | pr-N | think-or-recall | grade | confidence, tied to the practice log line.
+    enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence"]
+    for raw in exp:
+        parts = [p.strip() for p in raw.split(" | ")]
+        if len(parts) != len(enames):
+            fails.append(f"experiment line has {len(parts)} fields, expected {len(enames)}: {raw}")
+            continue
+        row = dict(zip(enames, parts))
+        for field, allowed in expect["experiment_fields"].items():
+            if row[field] not in allowed:
+                fails.append(f"experiment {field} = {row[field]!r}, expected one of {allowed}")
+        for raw_log in log:
+            lp = [p.strip() for p in raw_log.split(" | ")]
+            if len(lp) == len(names):
+                lrow = dict(zip(names, lp))
+                for f in ("timestamp", "repo", "branch-or-pr", "grade", "confidence"):
+                    if lrow[f] != row[f]:
+                        fails.append(f"experiment {f} {row[f]!r} doesn't match the log line's {lrow[f]!r}")
 
 for i, needles in ((1, expect.get("said_turn1", [])),):
     said = turn(i).get("result", "") if needles else ""

@@ -114,6 +114,8 @@ See the [Viva research](https://github.com/adamsuk/viva) for the evidence behind
 
 PRs welcome for additional skills or improvements. Keep skills pure (instructions + optional scripts/references), privacy-first, and soft (practice, not hard gates).
 
+Scenario evals in [`evals/`](evals/README.md) run the skills in a real agent against a fixture repo (`bash scripts/run-evals.sh`). They cost real usage, so they are not part of the push checks: the **Evals** workflow runs them on demand (Actions, "Run workflow") and only when the repository has an `ANTHROPIC_API_KEY` secret.
+
 ## License
 
 MIT

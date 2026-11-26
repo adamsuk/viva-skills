@@ -32,6 +32,73 @@ tname="an impossible date fails"; setup "${good/2026-11-25 10:30/2026-99-99 99:9
 tname="an empty later turn fails"; setup "$good"; : > "$ROOT/h/.eval/turn2.json"; run
 [[ $status -eq 1 ]] && grep -q "turn2.json is missing or not JSON" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 
+
+# Dispute after logging: the original line must be untouched, and a correction (grade disputed) must follow.
+cat > "$ROOT/expect-dispute.json" <<'J'
+{"lines": 2, "correction": {"after_turn": 2}, "fields": {"scope": ["last-commit"]}}
+J
+orig="2026-11-25 10:30 | $ver | o/r | main | abc | retry count | 3 | missed | last-commit | partly-live | hand | n/a | n/a"
+fixd() { # fixd <final log lines...>: the log after turn 2 holds $orig; the final log is the arguments
+  rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$orig" > "$ROOT/h/.eval/log-after-turn2.md"
+  printf '%s\n' "$@" > "$ROOT/h/.agents/viva-log.md"; printf '{"result": "x", "is_error": false}\n' > "$ROOT/h/.eval/turn1.json"; }
+drun() { status=0; out=$(python3 "$here/check-eval.py" "$skill" "$ROOT/expect-dispute.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?; }
+dgood="${orig/| missed |/| disputed |}"
+tname="a correction after an untouched line passes"; fixd "$orig" "$dgood"; drun; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a rewritten original fails"; fixd "$dgood" "$dgood"; drun
+[[ $status -eq 1 ]] && grep -q "original log line was changed" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a replaced original (no correction line) fails"; fixd "$dgood"; drun
+[[ $status -eq 1 ]] && grep -q "original log line was changed" <<< "$out" && grep -q "expected 2 log line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="no correction at all fails"; fixd "$orig"; drun
+[[ $status -eq 1 ]] && grep -q "expected 2 log line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a correction that keeps the grade fails"; fixd "$orig" "${orig/10:30/10:30}"; drun
+[[ $status -eq 1 ]] && grep -q "expected 'disputed'" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a correction with another key fails"; fixd "$orig" "${dgood/retry count/other topic}"; drun
+[[ $status -eq 1 ]] && grep -q "changed topic" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a correction with another timestamp fails"; fixd "$orig" "${dgood/10:30/11:45}"; drun
+[[ $status -eq 1 ]] && grep -q "changed timestamp" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a missing snapshot fails"; fixd "$orig" "$dgood"; rm "$ROOT/h/.eval/log-after-turn2.md"; drun
+[[ $status -eq 1 ]] && grep -q "expected 1 log line after turn 2" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+
+# Practice run: one practice log line and one experiment line with a think/recall value that matches it.
+cat > "$ROOT/expect-practice.json" <<'J'
+{"lines": 1, "fields": {"scope": ["practice"], "branch-or-pr": ["pr-7"]}, "experiment_lines": 1, "experiment_fields": {"think-or-recall": ["think"]}}
+J
+plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a"
+pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4"
+prun() { # prun <log line> <experiment line or empty>
+  rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$1" > "$ROOT/h/.agents/viva-log.md"
+  { echo "# viva experiment 1: think or recall"; [[ -n $2 ]] && echo "$2"; true; } > "$ROOT/h/.agents/viva-experiment.md"
+  printf '{"result": "x", "is_error": false}\n' > "$ROOT/h/.eval/turn1.json"
+  status=0; out=$(python3 "$here/check-eval.py" "$skill" "$ROOT/expect-practice.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?; }
+tname="a practice line and a matching experiment line pass"; prun "$plog" "$pexp"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a practice run with no experiment line fails"; prun "$plog" ""
+[[ $status -eq 1 ]] && grep -q "expected 1 experiment line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an experiment line without a think/recall value fails"; prun "$plog" "${pexp/| think |/| maybe |}"
+[[ $status -eq 1 ]] && grep -q "think-or-recall" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an experiment line for another PR fails"; prun "$plog" "${pexp/pr-7/pr-8}"
+[[ $status -eq 1 ]] && grep -q "doesn't match the log line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an experiment line with a missing field fails"; prun "$plog" "${pexp% | 4}"
+[[ $status -eq 1 ]] && grep -q "experiment line has 5 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a non-practice scope fails"; prun "${plog/| practice |/| last-commit |}" "$pexp"
+[[ $status -eq 1 ]] && grep -q "scope" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+
+# The fixtures and the stub gh the new scenarios depend on.
+evals="$here/../evals"
+mkfix() { rm -rf "$ROOT/fx"; mkdir -p "$ROOT/fx"; HOME="$ROOT" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null bash "$evals/$1" "$ROOT/fx" >/dev/null; }
+tname="the dispute fixture's commit message contradicts its code"; mkfix dispute-after-log/fixture-repo.sh
+[[ $(git -C "$ROOT/fx" log -1 --format=%s) == *"at most 5 attempts"* ]] && grep -q "MAX_ATTEMPTS = 3" "$ROOT/fx/fetch.py" \
+  && [[ $(git -C "$ROOT/fx" rev-list --count HEAD) -eq 2 ]] || fail "message and code don't disagree"; printf 'ok: %s\n' "$tname"
+tname="the practice fixture has a merge commit that the stub gh reports"; mkfix practice/fixture-repo.sh
+[[ $(git -C "$ROOT/fx" rev-list --merges --count HEAD) -eq 1 ]] || fail "no merge commit"
+list=$(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr list --author @me --state merged --json number,headRefName,mergedAt,mergeCommit)
+[[ $(jq -r '.[0] | "\(.number) \(.headRefName) \(.mergeCommit.oid)"' <<< "$list") == "7 feature/retry $(git -C "$ROOT/fx" rev-parse HEAD)" ]] || fail "$list"
+(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr diff 7) | grep -q '^+MAX_ATTEMPTS = 3' || fail "pr diff 7 is not the retry change"
+(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr diff 8) 2>/dev/null && fail "pr diff 8 should fail"
+(cd "$ROOT/fx" && "$evals/practice/bin/gh" api x) 2>/dev/null && fail "unsupported gh command should fail"
+printf 'ok: %s\n' "$tname"
+tname="every scenario has its turns and expectations"; for d in "$evals"/*/; do
+  [[ -f $d/expect.json && -f $d/1.txt ]] && jq -e . "$d/expect.json" >/dev/null || fail "bad scenario $d"; done; printf 'ok: %s\n' "$tname"
+
 # The runner, with a stand-in for the claude CLI (no agent, no cost).
 mkdir -p "$ROOT/bin"
 cat > "$ROOT/bin/claude" <<'SH'
@@ -40,7 +107,10 @@ cat > "$ROOT/bin/claude" <<'SH'
 if [[ " $* " == *" --resume "* && -n ${STUB_FAIL_RESUME:-} ]]; then
   echo '{"session_id": "s1", "is_error": false, "result": "", "total_cost_usd": 0}'; exit 1
 fi
-echo '{"session_id": "s1", "is_error": false, "result": "ok", "total_cost_usd": 0}'
+echo "{\"session_id\": \"s1\", \"is_error\": false, \"result\": \"ok\", \"total_cost_usd\": ${STUB_COST:-0}}"
+if [[ -n ${STUB_LOG_ARGS:-} ]]; then printf '%s\n' "$*" > "$STUB_LOG_ARGS"; fi
+if [[ -n ${STUB_LOG_PATH:-} ]]; then printf '%s\n' "$PATH" > "$STUB_LOG_PATH"; fi
+exit 0
 SH
 chmod +x "$ROOT/bin/claude"
 runner() { status=0; out=$(PATH="$ROOT/bin:$PATH" TMPDIR="$ROOT" ANTHROPIC_API_KEY=dummy "$@" bash "$here/run-evals.sh" no-log 2>&1) || status=$?; }
@@ -49,4 +119,15 @@ tname="a failed turn fails the scenario even when the checks pass"; runner env S
 [[ $status -eq 1 ]] && grep -q "^FAIL: no-log" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="the runner refuses to start without ANTHROPIC_API_KEY"; runner env -u ANTHROPIC_API_KEY
 [[ $status -eq 2 ]] && grep -q "set ANTHROPIC_API_KEY" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a run-wide cost cap stops the run before the next call"; runner env STUB_COST=1 EVAL_MAX_TOTAL_USD=1
+[[ $status -eq 1 ]] && grep -q "cost cap reached" <<< "$out" && grep -q "^FAIL: no-log" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="the per-call budget shrinks to what is left of the cap"; runner env STUB_COST=0.4 EVAL_MAX_TOTAL_USD=1 STUB_LOG_ARGS="$ROOT/args"
+grep -q -- "--max-budget-usd 0.6" "$ROOT/args" || fail "$(cat "$ROOT/args")"; printf 'ok: %s\n' "$tname"
+tname="a non-numeric cap is refused"; runner env EVAL_MAX_TOTAL_USD=lots; [[ $status -eq 2 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
+runner_practice() { status=0; out=$(PATH="$ROOT/bin:$PATH" TMPDIR="$ROOT" ANTHROPIC_API_KEY=dummy "$@" bash "$here/run-evals.sh" practice 2>&1) || status=$?; }
+tname="a scenario with a bin/ gets its stub gh first on PATH and may run gh"; rm -f "$ROOT/args" "$ROOT/path"
+runner_practice env STUB_LOG_ARGS="$ROOT/args" STUB_LOG_PATH="$ROOT/path"
+grep -q "Bash(gh \*)" "$ROOT/args" && [[ $(cut -d: -f1 "$ROOT/path") == */evals/practice/bin ]] || fail "$(cat "$ROOT/args" "$ROOT/path" 2>&1)"; printf 'ok: %s\n' "$tname"
+tname="a scenario without a bin/ doesn't get gh"; rm -f "$ROOT/args"; runner env STUB_LOG_ARGS="$ROOT/args"
+! grep -q "Bash(gh" "$ROOT/args" || fail "gh was allowed"; printf 'ok: %s\n' "$tname"
 printf 'ok: check-eval\n'

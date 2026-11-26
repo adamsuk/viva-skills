@@ -1,0 +1,1 @@
+Going by the commit message, get is called 5 times in total before the TimeoutError is raised. Confidence 3. I wrote it by hand.

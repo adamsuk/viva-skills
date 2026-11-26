@@ -2,6 +2,17 @@
 
 All notable changes to the viva skills are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Each section is the date the change merged (YYYY-MM-DD, Europe/London). Skill versions are in each `SKILL.md` (`metadata.version`).
 
+## 2026-11-26
+
+### Added
+
+- Two more scenario evals. `dispute-after-log` checks a dispute that stands after the line is written: the fixture's commit message says "at most 5 attempts" while the code has `MAX_ATTEMPTS = 3`, and a scripted dispute names the mismatch. The original line must be unchanged and one correction line with the same key and grade `disputed` must follow. `practice` runs `/viva practice 1` against a fixture repo with a merge commit and a stub `gh` on PATH (`pr list --json`, `pr diff`), and checks for one `practice` log line and one experiment-file line with a think/recall value that agrees with it. `scripts/check-eval.py` gained the `correction` and `experiment_fields` checks, the runner takes a per-scenario `fixture-repo.sh` and `bin/`, and `scripts/test-check-eval.sh` covers each new check, the fixtures and the stub offline. Why: the first evals left these two behaviours from the original ticket unchecked ([adamsuk/software-factory#502](https://github.com/adamsuk/software-factory/issues/502)).
+- A manual **Evals** workflow (`.github/workflows/evals.yml`) runs `scripts/run-evals.sh` on `workflow_dispatch`. It skips itself unless the `ANTHROPIC_API_KEY` secret is set, never runs on a fork, and has a per-call budget and a run-wide cost cap as inputs. Why: the evals existed but nothing ran them ([adamsuk/software-factory#502](https://github.com/adamsuk/software-factory/issues/502)).
+
+### Changed
+
+- `scripts/run-evals.sh` has a run-wide cost cap, `EVAL_MAX_TOTAL_USD` (default 5): no call starts once it is spent, and each call's budget is cut to what is left. Why: a per-call budget alone doesn't bound a whole run ([adamsuk/software-factory#502](https://github.com/adamsuk/software-factory/issues/502)).
+
 ## 2026-11-25
 
 ### Added
