@@ -104,7 +104,7 @@ cd /path/to/your/repo && bash ~/viva-skills/scripts/install-hook.sh
 
 Private by default: nothing is posted, shared or sent anywhere unless you ask.
 
-- **What**: one line per check: date and time, skill version, repository, branch or PR, commit, a short topic, your confidence, the grade, the scope the question covered, and whether the behaviour was live, and how the change was made (by hand, with AI, or by an agent).
+- **What**: one line per check: date and time, skill version, repository, branch or PR, commit, a short topic, your confidence, the grade, the scope the question covered, and whether the behaviour was live, how the change was made (by hand, with AI, or by an agent), and which kind of question was asked and, if you turned risk tiers on, the change's risk tier. If you keep an option on, `~/.agents/viva-settings.md` holds just that setting.
 - **Where**: `~/.agents/viva-log.md` on your device, or the personal map's storage in your browser if you put it there.
 - **Why**: so you can see your own solid and thin areas over time on the [personal map](https://adamsuk.github.io/viva).
 - **How long**: until you delete it. Delete the file (`rm ~/.agents/viva-log.md`), or press Forget this log on the personal map.
