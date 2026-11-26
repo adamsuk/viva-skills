@@ -43,8 +43,10 @@ fi
 echo '{"session_id": "s1", "is_error": false, "result": "ok", "total_cost_usd": 0}'
 SH
 chmod +x "$ROOT/bin/claude"
-runner() { status=0; out=$(PATH="$ROOT/bin:$PATH" TMPDIR="$ROOT" "$@" bash "$here/run-evals.sh" no-log 2>&1) || status=$?; }
+runner() { status=0; out=$(PATH="$ROOT/bin:$PATH" TMPDIR="$ROOT" ANTHROPIC_API_KEY=dummy "$@" bash "$here/run-evals.sh" no-log 2>&1) || status=$?; }
 tname="the runner passes a scenario whose turns succeed"; runner env; [[ $status -eq 0 ]] && grep -q "^ok: no-log" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a failed turn fails the scenario even when the checks pass"; runner env STUB_FAIL_RESUME=1
 [[ $status -eq 1 ]] && grep -q "^FAIL: no-log" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="the runner refuses to start without ANTHROPIC_API_KEY"; runner env -u ANTHROPIC_API_KEY
+[[ $status -eq 2 ]] && grep -q "set ANTHROPIC_API_KEY" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 printf 'ok: check-eval\n'

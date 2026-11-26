@@ -6,7 +6,8 @@
 # Usage: scripts/run-evals.sh [scenario ...]     (default: every directory under evals/)
 # Env:   EVAL_MODEL (default sonnet), EVAL_BUDGET_USD per call (default 1),
 #        EVAL_PERMISSION_MODE (default acceptEdits), KEEP=1 keeps temp dirs.
-# Needs: the claude CLI, signed in or with ANTHROPIC_API_KEY. Costs real usage; not run in CI by default.
+# Needs: the claude CLI, jq and ANTHROPIC_API_KEY (each scenario replaces HOME, so a stored sign-in
+#        isn't seen). Costs real usage; not run in CI by default.
 # A scenario is evals/<name>/ with 1.txt, 2.txt ... (one user turn each) and expect.json.
 # Exit 0 when every scenario passes, 1 otherwise, 2 on bad usage.
 set -uo pipefail
@@ -14,6 +15,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 root="$here/.."
 command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 2; }
 command -v jq >/dev/null || { echo "jq not found" >&2; exit 2; }
+[[ -n ${ANTHROPIC_API_KEY:-} ]] || { echo "set ANTHROPIC_API_KEY: each scenario uses a throwaway HOME, so a stored sign-in isn't seen" >&2; exit 2; }
 model="${EVAL_MODEL:-sonnet}"
 budget="${EVAL_BUDGET_USD:-1}"
 mode="${EVAL_PERMISSION_MODE:-acceptEdits}"

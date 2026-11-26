@@ -16,7 +16,7 @@ the repo's `.claude/skills/`. Turns run in order with `claude -p` and `--resume`
 skill version, timestamp, grade, and the fields in `expect.json`), the experiment file, and what
 the agent said.
 
-- Needs the `claude` CLI and `jq`. Each scenario overrides HOME, so a sign-in stored under `~/.claude` may not carry over: set `ANTHROPIC_API_KEY`. The runner unsets `CLAUDE_CONFIG_DIR`, so your own skills, settings and hooks stay out of the run. It costs real usage: about
+- Needs the `claude` CLI and `jq`. Each scenario overrides HOME, so a sign-in stored under `~/.claude` isn't seen: set `ANTHROPIC_API_KEY` (the runner stops if it isn't set). The runner unsets `CLAUDE_CONFIG_DIR`, so your own skills, settings and hooks stay out of the run. It costs real usage: about
   $0.20–0.30 per scenario with the default model (`EVAL_MODEL=sonnet`).
 - `EVAL_BUDGET_USD` caps each call (default 1). `EVAL_PERMISSION_MODE` defaults to `acceptEdits`;
   the agent may use Write/Edit and single `git`, `date` or `python3` commands. `python3` can still reach outside the temp dirs by absolute path; run evals only on skills you trust.
