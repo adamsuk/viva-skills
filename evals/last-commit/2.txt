@@ -1,0 +1,1 @@
+It calls get up to 3 times in total; after the third TimeoutError it re-raises instead of sleeping. Confidence 4. I wrote it by hand.

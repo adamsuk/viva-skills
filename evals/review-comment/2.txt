@@ -1,0 +1,1 @@
+I think the bot is wrong: the loop runs at most MAX_ATTEMPTS (3) times and re-raises on the last attempt, so it cannot loop forever. Confidence 4.

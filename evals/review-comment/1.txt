@@ -1,0 +1,1 @@
+/viva before I act on this CodeRabbit review comment on fetch.py, check it with me. The comment, from coderabbitai[bot]: "fetch() never stops retrying when get keeps raising TimeoutError, so a dead endpoint causes an infinite loop. Add an upper bound on attempts."
