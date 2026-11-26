@@ -11,7 +11,7 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ### Changed
 
-- CodeRabbit auto-reviews only `size/L` and `size/XL` PRs, the same `.coderabbit.yaml` Line uses. Smaller PRs get the independent review alone, as the factory's shared rules (§10, rule 4) already say. Why: CodeRabbit reviewed every PR, so its free allowance of about one review an hour ran out on S and M PRs, and some L PRs got no review at all ([adamsuk/software-factory#479](https://github.com/adamsuk/software-factory/issues/479)).
+- CodeRabbit auto-reviews only `size/L` and `size/XL` PRs, the same `.coderabbit.yaml` Line uses. Smaller PRs get the independent review alone, as the factory's shared rules (§10, rule 4) already say. Why: CodeRabbit reviewed every PR, so its free allowance of about one review an hour ran out on S and M PRs, and some L PRs got no review at all ([adamsuk/software-factory#479](https://github.com/adamsuk/software-factory/issues/479), [#31](https://github.com/adamsuk/viva-skills/pull/31)).
 - `scripts/run-evals.sh` has a run-wide cost cap, `EVAL_MAX_TOTAL_USD` (default 5): no call starts once it is spent, and each call's budget is cut to what is left. Why: a per-call budget alone doesn't bound a whole run ([adamsuk/software-factory#502](https://github.com/adamsuk/software-factory/issues/502)).
 
 ## 2026-11-25
