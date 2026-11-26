@@ -11,6 +11,7 @@ All notable changes to the viva skills are recorded here. The format follows [Ke
 
 ### Changed
 
+- Release 0.6.3: `VERSION` is now 0.6.3, matching `viva` 0.6.3 (`viva-assess` 0.4.1), and the README's tag and pin examples use `v0.6.3`. Why: the full-timestamp fix (#28) merged after 0.6.2 and no release carried it.
 - `scripts/run-evals.sh` has a run-wide cost cap, `EVAL_MAX_TOTAL_USD` (default 5): no call starts once it is spent, and each call's budget is cut to what is left. Why: a per-call budget alone doesn't bound a whole run ([adamsuk/software-factory#502](https://github.com/adamsuk/software-factory/issues/502)).
 
 ## 2026-11-25
