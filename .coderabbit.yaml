@@ -2,6 +2,8 @@
 # Owned by this repo (was factory-managed), as in adamsuk/line. Free-tier CodeRabbit
 # only auto-reviews size/L and size/XL; smaller PRs use the independent review
 # (software-factory AGENTS.md section 10, rule 4; adamsuk/software-factory#479).
+# A fork PR may get no size label (its pull_request token is read-only), so it is never
+# auto-reviewed: for a fork PR over 200 changed lines, a maintainer posts `@coderabbitai review`.
 language: en-GB
 inheritance: true
 reviews:
