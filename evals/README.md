@@ -34,7 +34,7 @@ the agent said.
 | `last-commit` | `/viva check my last commit`, then an answer with confidence and "by hand" | first-run notice names the log; one 13-field line, current version, scope last-commit, ai-use hand, bot fields n/a, live partly-live or hazard (`fetch` has no caller) |
 | `no-log` | the same, answering with "no log" | nothing written |
 | `dispute-after-log` | a last-commit check whose commit message says "at most 5 attempts" while the code has `MAX_ATTEMPTS = 3`, an answer, then a dispute naming the mismatch | the line written after turn 2 is byte-for-byte unchanged; one correction line follows with every field the same except grade `disputed` |
-| `practice` | `/viva practice 1` against a fixture repo with a merge commit (PR #7) and a stub `gh` (`evals/practice/bin/gh`) answering `pr list` and `pr diff`; an answer; "I had to think it through" | one `practice` log line for `pr-7`, and one experiment-file line with value `think` that agrees with it on time, repo, PR, grade and confidence |
+| `practice` | `/viva practice 1` against a fixture repo with a merge commit (PR #7) and a stub `gh` (`evals/practice/bin/gh`) answering `pr list`, `pr view` and `pr diff`; an answer; "I had to think it through. It was a backend change." | one `practice` log line for `pr-7`, and one experiment-file line with value `think`, size `S`, a whole number of days since merge and kind `backend`, that agrees with the log line on time, repo, PR, grade and confidence |
 | `review-comment` | a CodeRabbit comment whose claim is wrong, then a correct rejection | one line with scope review-comment, bot-claim wrong, bot coderabbit, grade understood |
 
 Add one by creating `evals/<name>/` with `1.txt`, `2.txt`, … (one user turn each) and an

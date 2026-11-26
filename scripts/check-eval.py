@@ -69,14 +69,20 @@ exp = lines(home / ".agents/viva-experiment.md")
 if len(exp) != expect.get("experiment_lines", 0):
     fails.append(f"expected {expect.get('experiment_lines', 0)} experiment line(s), found {len(exp)}")
 if "experiment_fields" in expect:
-    # timestamp | repo | pr-N | think-or-recall | grade | confidence, tied to the practice log line.
-    enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence"]
+    # timestamp | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind,
+    # tied to the practice log line.
+    enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence",
+              "size", "days-since-merge", "kind"]
     for raw in exp:
         parts = [p.strip() for p in raw.split(" | ")]
         if len(parts) != len(enames):
             fails.append(f"experiment line has {len(parts)} fields, expected {len(enames)}: {raw}")
             continue
         row = dict(zip(enames, parts))
+        if row["size"] not in ("S", "M", "L", "unknown"):
+            fails.append(f"experiment size {row['size']!r} isn't S, M, L or unknown")
+        if not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
+            fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
         for field, allowed in expect["experiment_fields"].items():
             if row[field] not in allowed:
                 fails.append(f"experiment {field} = {row[field]!r}, expected one of {allowed}")

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Stand-in for gh in the practice scenario: one merged PR (#7), taken from the fixture's merge commit.
-# Only `pr list` and `pr diff` exist; flags such as --author, --state and --jq are ignored.
+# Only `pr list`, `pr view` and `pr diff` exist; flags such as --author, --state and --jq are ignored.
 merge=$(git log --merges -1 --format=%H 2>/dev/null) || exit 1
 case "$1 $2" in
   "pr list")
-    printf '[{"number":7,"headRefName":"feature/retry","mergedAt":"2026-11-20T10:00:00Z","mergeCommit":{"oid":"%s"}}]\n' "$merge" ;;
+    printf '[{"number":7,"headRefName":"feature/retry","mergedAt":"2026-11-20T10:00:00Z","mergeCommit":{"oid":"%s"},"additions":12,"deletions":2}]\n' "$merge" ;;
+  "pr view")
+    [[ ${3:-} == 7 ]] || { echo "gh stub: no such PR: ${3:-}" >&2; exit 1; }
+    printf '{"number":7,"mergedAt":"2026-11-20T10:00:00Z","additions":12,"deletions":2}\n' ;;
   "pr diff")
     [[ ${3:-} == 7 ]] || { echo "gh stub: no such PR: ${3:-}" >&2; exit 1; }
     git diff "$merge^1" "$merge" ;;

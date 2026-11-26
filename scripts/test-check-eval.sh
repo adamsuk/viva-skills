@@ -64,7 +64,7 @@ cat > "$ROOT/expect-practice.json" <<'J'
 {"lines": 1, "fields": {"scope": ["practice"], "branch-or-pr": ["pr-7"]}, "experiment_lines": 1, "experiment_fields": {"think-or-recall": ["think"]}}
 J
 plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a"
-pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4"
+pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4 | S | 5 | backend"
 prun() { # prun <log line> <experiment line or empty>
   rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$1" > "$ROOT/h/.agents/viva-log.md"
   { echo "# viva experiment 1: think or recall"; [[ -n $2 ]] && echo "$2"; true; } > "$ROOT/h/.agents/viva-experiment.md"
@@ -77,8 +77,15 @@ tname="an experiment line without a think/recall value fails"; prun "$plog" "${p
 [[ $status -eq 1 ]] && grep -q "think-or-recall" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="an experiment line for another PR fails"; prun "$plog" "${pexp/pr-7/pr-8}"
 [[ $status -eq 1 ]] && grep -q "doesn't match the log line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
-tname="an experiment line with a missing field fails"; prun "$plog" "${pexp% | 4}"
-[[ $status -eq 1 ]] && grep -q "experiment line has 5 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an experiment line with a missing field fails"; prun "$plog" "${pexp% | backend}"
+[[ $status -eq 1 ]] && grep -q "experiment line has 8 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an old six-field experiment line fails for the current skill"; prun "$plog" "${pexp% | S | 5 | backend}"
+[[ $status -eq 1 ]] && grep -q "experiment line has 6 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an exact line count instead of a size bucket fails"; prun "$plog" "${pexp/| S |/| 14 |}"
+[[ $status -eq 1 ]] && grep -q "experiment size" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="days since merge that isn't a number fails"; prun "$plog" "${pexp/| 5 |/| 5d |}"
+[[ $status -eq 1 ]] && grep -q "days-since-merge" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="unknown size and days pass"; prun "$plog" "${pexp/| S | 5 |/| unknown | unknown |}"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a non-practice scope fails"; prun "${plog/| practice |/| last-commit |}" "$pexp"
 [[ $status -eq 1 ]] && grep -q "scope" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 
@@ -94,6 +101,10 @@ list=$(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr list --author @me --state me
 [[ $(jq -r '.[0] | "\(.number) \(.headRefName) \(.mergeCommit.oid)"' <<< "$list") == "7 feature/retry $(git -C "$ROOT/fx" rev-parse HEAD)" ]] || fail "$list"
 (cd "$ROOT/fx" && "$evals/practice/bin/gh" pr diff 7) | grep -q '^+MAX_ATTEMPTS = 3' || fail "pr diff 7 is not the retry change"
 (cd "$ROOT/fx" && "$evals/practice/bin/gh" pr diff 8) 2>/dev/null && fail "pr diff 8 should fail"
+view=$(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr view 7 --json additions,deletions,mergedAt)
+[[ $(jq -r '"\(.additions) \(.deletions)"' <<< "$view") == "$(git -C "$ROOT/fx" diff --numstat HEAD^1 HEAD | awk '{print $1" "$2}')" ]] \
+  || fail "pr view 7's additions and deletions don't match the merge: $view"
+(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr view 8) 2>/dev/null && fail "pr view 8 should fail"
 (cd "$ROOT/fx" && "$evals/practice/bin/gh" api x) 2>/dev/null && fail "unsupported gh command should fail"
 printf 'ok: %s\n' "$tname"
 tname="every scenario has its turns and expectations"; for d in "$evals"/*/; do

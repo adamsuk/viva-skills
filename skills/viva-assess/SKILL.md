@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.4.1"
+  version: "0.4.2"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -58,8 +58,9 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - **Required:** End the report with this exact sentence (or equivalent that includes the full URL): "You can also open the personal map at https://adamsuk.github.io/viva and drop the same log file (or paste an export) to see the interactive topic view."
 
 4a. **Experiment 1 (only if asked)**
-   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence`). If a repo and PR appear more than once, the last line is a correction: use only that one.
+   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind`; older lines have only the first six fields, so treat the last three as `unknown`). If a repo and PR appear more than once, the last line is a correction: use only that one.
    - Report the counts of think, recall and mixed (and skips), and how many of the 20 are done (skips don't count). Leaving `disputed` grades out, give the understood count within each of think, recall and mixed, and say whether the understood rate differs between think and recall, with the counts. Skip any group with fewer than 3. Don't draw a conclusion the numbers don't support: a small sample is a sketch, not a result.
+   - Where lines have them, give the understood count (disputed left out) by `size` (S, M, L), by days since merge (under 7, 7 to 30, over 30) and by `kind`, under the same rule of at least 3 per group. Leave `unknown` and `skip` out of these groups and say how many were left out. If older lines lack the fields, say the user can fill them in with "/viva practice fill".
    - Offer to format it as a row for the Log table in Viva's EXPERIMENTS.md, but don't post or commit it.
 
 5. **Stay private**
