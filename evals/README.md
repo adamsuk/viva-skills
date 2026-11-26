@@ -38,4 +38,4 @@ the agent said.
 | `review-comment` | a CodeRabbit comment whose claim is wrong, then a correct rejection | one line with scope review-comment, bot-claim wrong, bot coderabbit, grade understood |
 
 Add one by creating `evals/<name>/` with `1.txt`, `2.txt`, … (one user turn each) and an
-`expect.json` (`lines`, `fields`, `experiment_lines`, `experiment_fields`, `said_turn1`, and `correction` with `after_turn` to check that the log line written after that turn is unchanged and one `disputed` correction follows).
+`expect.json` (`lines`, `fields`, `experiment_lines`, `experiment_fields`, `experiment_days_known` (days since merge must be a number), `said_turn1`, and `correction` with `after_turn` to check that the log line written after that turn is unchanged and one `disputed` correction follows).

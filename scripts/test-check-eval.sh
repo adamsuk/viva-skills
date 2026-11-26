@@ -65,11 +65,12 @@ cat > "$ROOT/expect-practice.json" <<'J'
 J
 plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a"
 pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4 | S | 5 | backend"
-prun() { # prun <log line> <experiment line or empty>
+prun() { # prun <log line> <experiment line or empty> [extra expect.json keys]
+  jq -s add "$ROOT/expect-practice.json" <(printf '%s' "${3:-{\}}") > "$ROOT/expect-run.json"
   rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$1" > "$ROOT/h/.agents/viva-log.md"
   { echo "# viva experiment 1: think or recall"; [[ -n $2 ]] && echo "$2"; true; } > "$ROOT/h/.agents/viva-experiment.md"
   printf '{"result": "x", "is_error": false}\n' > "$ROOT/h/.eval/turn1.json"
-  status=0; out=$(python3 "$here/check-eval.py" "$skill" "$ROOT/expect-practice.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?; }
+  status=0; out=$(python3 "$here/check-eval.py" "$skill" "$ROOT/expect-run.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?; }
 tname="a practice line and a matching experiment line pass"; prun "$plog" "$pexp"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a practice run with no experiment line fails"; prun "$plog" ""
 [[ $status -eq 1 ]] && grep -q "expected 1 experiment line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
@@ -87,6 +88,8 @@ tname="days since merge that isn't a number fails"; prun "$plog" "${pexp/| 5 |/|
 [[ $status -eq 1 ]] && grep -q "days-since-merge" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a kind copied from the user's words fails"; prun "$plog" "${pexp/| backend/| the billing webhook}"
 [[ $status -eq 1 ]] && grep -q "experiment kind" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="unknown days fail when the scenario gives mergedAt"; prun "$plog" "${pexp/| 5 |/| unknown |}" '{"experiment_days_known": true}'
+[[ $status -eq 1 ]] && grep -q "must be a number" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="unknown size and days pass"; prun "$plog" "${pexp/| S | 5 |/| unknown | unknown |}"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a non-practice scope fails"; prun "${plog/| practice |/| last-commit |}" "$pexp"
 [[ $status -eq 1 ]] && grep -q "scope" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"

@@ -83,7 +83,9 @@ if "experiment_fields" in expect:
             fails.append(f"experiment size {row['size']!r} isn't S, M, L or unknown")
         if row["kind"] not in ("backend", "frontend", "setup", "refactor", "other", "skip"):
             fails.append(f"experiment kind {row['kind']!r} isn't one of the fixed kinds or skip")
-        if not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
+        if expect.get("experiment_days_known") and not row["days-since-merge"].isdigit():
+            fails.append(f"experiment days-since-merge {row['days-since-merge']!r}: the scenario gives mergedAt, so it must be a number")
+        elif not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
         for field, allowed in expect["experiment_fields"].items():
             if row[field] not in allowed:
