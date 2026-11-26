@@ -85,6 +85,8 @@ tname="an exact line count instead of a size bucket fails"; prun "$plog" "${pexp
 [[ $status -eq 1 ]] && grep -q "experiment size" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="days since merge that isn't a number fails"; prun "$plog" "${pexp/| 5 |/| 5d |}"
 [[ $status -eq 1 ]] && grep -q "days-since-merge" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a kind copied from the user's words fails"; prun "$plog" "${pexp/| backend/| the billing webhook}"
+[[ $status -eq 1 ]] && grep -q "experiment kind" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="unknown size and days pass"; prun "$plog" "${pexp/| S | 5 |/| unknown | unknown |}"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a non-practice scope fails"; prun "${plog/| practice |/| last-commit |}" "$pexp"
 [[ $status -eq 1 ]] && grep -q "scope" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"

@@ -81,6 +81,8 @@ if "experiment_fields" in expect:
         row = dict(zip(enames, parts))
         if row["size"] not in ("S", "M", "L", "unknown"):
             fails.append(f"experiment size {row['size']!r} isn't S, M, L or unknown")
+        if row["kind"] not in ("backend", "frontend", "setup", "refactor", "other", "skip"):
+            fails.append(f"experiment kind {row['kind']!r} isn't one of the fixed kinds or skip")
         if not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
         for field, allowed in expect["experiment_fields"].items():
