@@ -21,12 +21,14 @@ the agent said.
 - `EVAL_BUDGET_USD` caps each call (default 1). `EVAL_PERMISSION_MODE` defaults to `acceptEdits`;
   the agent may use Write/Edit and single `git`, `date` or `python3` commands. `python3` can still reach outside the temp dirs by absolute path; run evals only on skills you trust.
 - `KEEP=1` keeps every scenario's temp dirs; a failing scenario always keeps its own and prints where.
+- A turn that fails (non-zero exit or no session) fails its scenario, even if what was written so far passes the checks.
+- `bash scripts/test-check-eval.sh` tests the checker and the runner offline, with a stand-in for `claude`: no agent, no cost. Run it after changing either.
 
 ## Scenarios
 
 | Scenario | Turns | Checks |
 |---|---|---|
-| `last-commit` | `/viva check my last commit`, then an answer with confidence and "by hand" | first-run notice names the log; one 13-field line, current version, scope last-commit, ai-use hand, bot fields n/a |
+| `last-commit` | `/viva check my last commit`, then an answer with confidence and "by hand" | first-run notice names the log; one 13-field line, current version, scope last-commit, ai-use hand, bot fields n/a, live partly-live or hazard (`fetch` has no caller) |
 | `no-log` | the same, answering with "no log" | nothing written |
 | `review-comment` | a CodeRabbit comment whose claim is wrong, then a correct rejection | one line with scope review-comment, bot-claim wrong, bot coderabbit, grade understood |
 
