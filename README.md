@@ -13,6 +13,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
   - **Re-checks what you missed**: when your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.
   - **Before you post**: optionally helps you write the PR description in your own words (why, what, and the decision you're least sure of) and suggests an `Assisted-by` trailer from how the change was made. Nothing is posted or committed without you.
   - **Practice mode**: `/viva practice [N]` works through your own past merged PRs one at a time, one question each, and asks whether you had to think or just recalled. The answer goes to a separate local file, `~/.agents/viva-experiment.md`, for Viva's experiment 1, with the PR's rough size (S, M, L), days since merge and the kind of change (no file names or code). `/viva practice fill` adds those to earlier lines. `viva-assess` summarises it.
+  - **Options to compare** (off by default): `/viva decision` asks about a decision in the change (why this approach, what must stay true, what breaks if it is wrong) instead of a scenario. `/viva tiered` sorts the change into low, normal or high risk: low gets no question unless you say "ask anyway", high gets the offer of a second question. To keep either on, put `style: decision` or `risk-tiers: on` in `~/.agents/viva-settings.md`. Neither is backed by evidence yet, so each check logs which it used, for Viva's experiment 8.
   - **How the change was made**: it records `ai-use` (by hand, asked AI why, generated then understood, delegated, built by an agent) so the map can show whether how you use AI tracks your understanding.
 - **viva-assess** — Interpret and assess multiple answers or a log excerpt. Flags confident-wrong cases, thin topics, and suggests next practice steps. Leaves disputed checks out, compares grades by how the change was made, says whether your sure answers were understood more often than unsure ones, and flags it when your latest checks slipped against earlier ones.
 
@@ -103,7 +104,7 @@ cd /path/to/your/repo && bash ~/viva-skills/scripts/install-hook.sh
 
 Private by default: nothing is posted, shared or sent anywhere unless you ask.
 
-- **What**: one line per check: date and time, skill version, repository, branch or PR, commit, a short topic, your confidence, the grade, the scope the question covered, and whether the behaviour was live, and how the change was made (by hand, with AI, or by an agent).
+- **What**: one line per check: date and time, skill version, repository, branch or PR, commit, a short topic, your confidence, the grade, the scope the question covered, and whether the behaviour was live, how the change was made (by hand, with AI, or by an agent), and which kind of question was asked and, if you turned risk tiers on, the change's risk tier. If you keep an option on, `~/.agents/viva-settings.md` holds just that setting.
 - **Where**: `~/.agents/viva-log.md` on your device, or the personal map's storage in your browser if you put it there.
 - **Why**: so you can see your own solid and thin areas over time on the [personal map](https://adamsuk.github.io/viva).
 - **How long**: until you delete it. Delete the file (`rm ~/.agents/viva-log.md`), or press Forget this log on the personal map.

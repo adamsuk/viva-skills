@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.4.2"
+  version: "0.4.3"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -35,6 +35,7 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Lines from skill 0.4.x and later carry an 11th field, `ai-use` (`hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`). Older lines have none: treat them as `unknown`.
    - Lines from skill 0.5.x add a 12th field, `bot-claim` (`held`, `partly`, `wrong`, `n/a`): for a `review-comment` check, whether the bot's claim held. Older lines have none: treat them as `n/a`.
    - Lines from skill 0.6.x add a 13th field, `bot`: which bot made a checked review comment (`n/a` for other scopes). Older review-comment lines have none: treat the bot as `unknown`.
+   - Lines from skill 0.7.x add a 14th and 15th field, `style` (`scenario` or `decision`) and `risk` (`low`, `normal`, `high`, or `n/a` when risk tiers were off). Older lines have none: treat them as `scenario` and `n/a`.
 
 3. **Assess**
    - Leave `disputed` checks out of every signal below: the question was faulty, not the user.
@@ -46,6 +47,8 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - **Drift.** Leave `practice` checks out: they are old PRs, not recent work. With 10 or more counted checks in date order, compare the latest 5 with all the earlier ones on three things: the understood rate, the share at high confidence, and the share of `delegated` or `agent` changes (counting only checks that record `ai-use`, and only when each side has at least 3 of them, so older lines without the field can't fake a rise). If one moved the wrong way by 20 points or more (understood down, or delegated/agent up, or high confidence up while understood fell), say so in one line with both numbers, as a nudge to slow down on the next change. Otherwise say nothing about drift. Five checks is a small sample: never call it a trend or a decline in the user.
    - If any `review-comment` line records `bot-claim`, give one line with how many of the checked bot comments held, partly held, or were wrong, leaving out disputed checks; if more than one bot appears, give the counts per bot. If most were wrong, say the bot's comments deserve a quick check before anyone acts on them. Catching a wrong claim counts as understanding, not a miss.
    - If any line records `ai-use`, compare grades by it (counts only). If delegated or agent-built changes were understood less often than the rest, say so in one line and suggest asking the agent why, or generating then making sure the user could rewrite it, on the next change. This is the pattern the research found matters most; it is a nudge, not a verdict.
+
+   - **Options, only if the log uses them.** If any line has `style` `decision`, give the understood counts for scenario and decision questions, leaving out disputed checks, and the disputed count for each (many disputes on one style say its questions need work). If any line has a `risk` other than `n/a`, give the understood counts by tier. Skip any group with fewer than 3 checks. These options are untested: never say one style or tier is better from a few checks, and say plainly when the groups are too small to compare.
 
 4. **Report**
    - Short summary: N checks, M topics, K thin (and D disputed, if any).
