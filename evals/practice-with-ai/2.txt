@@ -1,0 +1,1 @@
+My assistant says the loop makes at most 3 attempts and re-raises the last TimeoutError without sleeping between tries. Confidence 5.

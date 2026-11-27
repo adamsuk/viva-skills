@@ -64,7 +64,7 @@ cat > "$ROOT/expect-practice.json" <<'J'
 {"lines": 1, "fields": {"scope": ["practice"], "branch-or-pr": ["pr-7"]}, "experiment_lines": 1, "experiment_fields": {"think-or-recall": ["think"]}}
 J
 plog="2026-11-25 10:30 | $ver | o/r | pr-7 | abc1234 | retry bound | 4 | understood | practice | live | hand | n/a | n/a | scenario | n/a"
-pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4 | S | 5 | backend"
+pexp="2026-11-25 10:30 | o/r | pr-7 | think | understood | 4 | S | 5 | backend | none"
 prun() { # prun <log line> <experiment line or empty> [extra expect.json keys]
   jq -s add "$ROOT/expect-practice.json" <(printf '%s' "${3:-{\}}") > "$ROOT/expect-run.json"
   rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.agents" "$ROOT/h/.eval"; printf '%s\n' "$1" > "$ROOT/h/.agents/viva-log.md"
@@ -78,9 +78,9 @@ tname="an experiment line without a think/recall value fails"; prun "$plog" "${p
 [[ $status -eq 1 ]] && grep -q "think-or-recall" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="an experiment line for another PR fails"; prun "$plog" "${pexp/pr-7/pr-8}"
 [[ $status -eq 1 ]] && grep -q "doesn't match the log line" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
-tname="an experiment line with a missing field fails"; prun "$plog" "${pexp% | backend}"
-[[ $status -eq 1 ]] && grep -q "experiment line has 8 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
-tname="an old six-field experiment line fails for the current skill"; prun "$plog" "${pexp% | S | 5 | backend}"
+tname="an experiment line with a missing field fails"; prun "$plog" "${pexp% | none}"
+[[ $status -eq 1 ]] && grep -q "experiment line has 9 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an old six-field experiment line fails for the current skill"; prun "$plog" "${pexp% | S | 5 | backend | none}"
 [[ $status -eq 1 ]] && grep -q "experiment line has 6 fields" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="an exact line count instead of a size bucket fails"; prun "$plog" "${pexp/| S |/| 14 |}"
 [[ $status -eq 1 ]] && grep -q "experiment size" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
@@ -91,6 +91,16 @@ tname="a kind copied from the user's words fails"; prun "$plog" "${pexp/| backen
 tname="unknown days fail when the scenario gives mergedAt"; prun "$plog" "${pexp/| 5 |/| unknown |}" '{"experiment_days_known": true}'
 [[ $status -eq 1 ]] && grep -q "must be a number" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="unknown size and days pass"; prun "$plog" "${pexp/| S | 5 |/| unknown | unknown |}"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="an aid that isn't none or ai fails"; prun "$plog" "${pexp/%none/chatgpt}"
+[[ $status -eq 1 ]] && grep -q "experiment aid" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+# Experiment 2: a with-AI line comes after a seeded first-pass line and is never written to the log.
+pai="2026-11-26 09:15 | o/r | pr-7 | recall | understood | 5 | S | 6 | backend | ai"
+seed='{"experiment_lines": 2, "experiment_seeded": ["2026-11-25 10:30"], "experiment_fields": {"aid": ["ai"]}}'
+tname="a with-AI line with no log line of its own passes"; prun "$plog" "$pexp"$'\n'"$pai" "$seed"; [[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a with-AI answer written to the log fails"; prun "$plog"$'\n'"${plog/2026-11-25 10:30/2026-11-26 09:15}" "$pexp"$'\n'"$pai" "${seed%\}}, \"lines\": 2}"
+[[ $status -eq 1 ]] && grep -q "written to the log too" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
+tname="a second pass marked none fails the scenario's aid"; prun "$plog" "$pexp"$'\n'"${pai/%ai/none}" "$seed"
+[[ $status -eq 1 ]] && grep -q "experiment aid = 'none'" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="a non-practice scope fails"; prun "${plog/| practice |/| last-commit |}" "$pexp"
 [[ $status -eq 1 ]] && grep -q "scope" <<< "$out" || fail "$out"; printf 'ok: %s\n' "$tname"
 
@@ -100,6 +110,12 @@ mkfix() { rm -rf "$ROOT/fx"; mkdir -p "$ROOT/fx"; HOME="$ROOT" GIT_CONFIG_NOSYST
 tname="the dispute fixture's commit message contradicts its code"; mkfix dispute-after-log/fixture-repo.sh
 [[ $(git -C "$ROOT/fx" log -1 --format=%s) == *"at most 5 attempts"* ]] && grep -q "MAX_ATTEMPTS = 3" "$ROOT/fx/fetch.py" \
   && [[ $(git -C "$ROOT/fx" rev-list --count HEAD) -eq 2 ]] || fail "message and code don't disagree"; printf 'ok: %s\n' "$tname"
+tname="the with-AI fixture seeds a first pass the checker accepts"; mkfix practice-with-ai/fixture-repo.sh
+rm -rf "$ROOT/h"; mkdir -p "$ROOT/h/.eval"; cp -r "$ROOT/.agents" "$ROOT/h/"; rm -rf "$ROOT/.agents"
+echo "2026-11-27 09:00 | eval-user/fixture | pr-7 | recall | understood | 5 | S | 6 | backend | ai" >> "$ROOT/h/.agents/viva-experiment.md"
+printf '{"result": "x", "is_error": false}\n' > "$ROOT/h/.eval/turn1.json"
+status=0; out=$(python3 "$here/check-eval.py" "$skill" "$evals/practice-with-ai/expect.json" "$ROOT/h" "$ROOT/h/.eval" 2>&1) || status=$?
+[[ $status -eq 0 ]] || fail "$out"; printf 'ok: %s\n' "$tname"
 tname="the practice fixture has a merge commit that the stub gh reports"; mkfix practice/fixture-repo.sh
 [[ $(git -C "$ROOT/fx" rev-list --merges --count HEAD) -eq 1 ]] || fail "no merge commit"
 list=$(cd "$ROOT/fx" && "$evals/practice/bin/gh" pr list --author @me --state merged --json number,headRefName,mergedAt,mergeCommit)

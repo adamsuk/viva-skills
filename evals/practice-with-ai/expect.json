@@ -1,0 +1,1 @@
+{"lines": 1, "fields": {"scope": ["practice"], "branch-or-pr": ["pr-7"], "timestamp": ["2026-11-21 10:30"]}, "experiment_lines": 2, "experiment_seeded": ["2026-11-21 10:30"], "experiment_days_known": true, "experiment_fields": {"branch-or-pr": ["pr-7"], "aid": ["ai"], "size": ["S"], "kind": ["backend"], "think-or-recall": ["recall", "mixed"]}}

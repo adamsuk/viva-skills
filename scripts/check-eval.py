@@ -69,10 +69,10 @@ exp = lines(home / ".agents/viva-experiment.md")
 if len(exp) != expect.get("experiment_lines", 0):
     fails.append(f"expected {expect.get('experiment_lines', 0)} experiment line(s), found {len(exp)}")
 if "experiment_fields" in expect:
-    # timestamp | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind,
-    # tied to the practice log line.
+    # timestamp | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind | aid.
+    # An `aid none` line is tied to the practice log line; an `aid ai` line (experiment 2) has no log line.
     enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence",
-              "size", "days-since-merge", "kind"]
+              "size", "days-since-merge", "kind", "aid"]
     for raw in exp:
         parts = [p.strip() for p in raw.split(" | ")]
         if len(parts) != len(enames):
@@ -87,9 +87,18 @@ if "experiment_fields" in expect:
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r}: the scenario gives mergedAt, so it must be a number")
         elif not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
+        if row["aid"] not in ("none", "ai"):
+            fails.append(f"experiment aid {row['aid']!r} isn't none or ai")
+        if expect.get("experiment_seeded") and row["timestamp"] in expect["experiment_seeded"]:
+            continue  # a first-pass line the scenario wrote before the run
         for field, allowed in expect["experiment_fields"].items():
             if row[field] not in allowed:
                 fails.append(f"experiment {field} = {row[field]!r}, expected one of {allowed}")
+        if row["aid"] == "ai":
+            for raw_log in log:
+                if raw_log.split(" | ")[0].strip() == row["timestamp"]:
+                    fails.append(f"the with-AI answer at {row['timestamp']} was written to the log too")
+            continue
         for raw_log in log:
             lp = [p.strip() for p in raw_log.split(" | ")]
             if len(lp) == len(names):
