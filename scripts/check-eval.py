@@ -73,7 +73,12 @@ if "experiment_fields" in expect:
     # An `aid none` line is tied to the practice log line; an `aid ai` line (experiment 2) has no log line.
     enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence",
               "size", "days-since-merge", "kind", "aid"]
-    for raw in exp:
+    # experiment_seeded: the exact lines the fixture wrote. They must still open the file, unchanged, and
+    # experiment_fields apply only to the lines the run added after them.
+    seeded = expect.get("experiment_seeded", [])
+    if exp[:len(seeded)] != seeded:
+        fails.append(f"the seeded experiment lines were changed or are missing: expected {seeded}, found {exp[:len(seeded)]}")
+    for i, raw in enumerate(exp):
         parts = [p.strip() for p in raw.split(" | ")]
         if len(parts) != len(enames):
             fails.append(f"experiment line has {len(parts)} fields, expected {len(enames)}: {raw}")
@@ -89,8 +94,8 @@ if "experiment_fields" in expect:
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
         if row["aid"] not in ("none", "ai"):
             fails.append(f"experiment aid {row['aid']!r} isn't none or ai")
-        if expect.get("experiment_seeded") and row["timestamp"] in expect["experiment_seeded"]:
-            continue  # a first-pass line the scenario wrote before the run
+        if i < len(seeded):
+            continue  # checked above, byte for byte
         for field, allowed in expect["experiment_fields"].items():
             if row[field] not in allowed:
                 fails.append(f"experiment {field} = {row[field]!r}, expected one of {allowed}")
