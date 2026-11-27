@@ -3,7 +3,7 @@ name: viva
 description: After a change I made (or an agent made for me), before I approve a PR I'm reviewing, or before I forward or act on a bot's review comment, ask one small scenario question about what the code actually does, capture my confidence, then reveal the answer and the key lines. Use when I say viva, check my last commit, quiz me on this change, practice a PR or branch, understand a recent diff, quiz me on a PR before I approve it, help me write my PR description in my own words, practice on my past PRs, or check a CodeRabbit or other bot review comment before passing it on.
 license: MIT
 metadata:
-  version: "0.6.4"
+  version: "0.7.0"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents.
@@ -13,11 +13,25 @@ compatibility: Requires git. Works in Claude Code, Grok, Codex, Cursor, and othe
 
 You are helping the user check their own understanding of a recent change. This is practice, not a gate. N/A or "skip" is always fine.
 
+## Options (both off by default)
+
+Two options change how the question is chosen. Neither has evidence behind it as a check on understanding, and neither does the default scenario question. They are here to be compared, not because they are better, so every check logs which were used (`style` and `risk` in step 6). Without either option the skill behaves exactly as before.
+
+- **Question style: decision.** Instead of "what happens for this input", ask about one decision in the change: why it took this approach over the obvious alternative, what must stay true for it to be right (an invariant), or what breaks if it is wrong and how you would notice. See step 3.
+- **Risk tiers.** Sort the change into `low`, `normal` or `high` (step 2), then: on `low`, ask no question unless the user says "ask anyway"; on `normal`, carry on as usual; on `high`, carry on as usual, and after the reveal offer one more question on a different decision or risk in the change (the user chooses; see Rules).
+
+How to turn them on:
+- For one run, from the user's words: "/viva decision" or "a decision question" sets the style; "/viva tiered" or "with risk tiers" turns tiers on. Both can be given together.
+- For every run on this device, from `~/.agents/viva-settings.md` if it exists: a line `style: decision` and/or a line `risk-tiers: on`. Read only those two keys and ignore anything else in the file. Create or change the file only when the user asks ("always use decision questions", "turn risk tiers on"), and say in one line where it is and how to turn the option off.
+- The user's words for this run win over the file. With neither, the style is `scenario` and tiers are off.
+- When an option is on, say so in the target line (step 2), so the user can turn it off.
+- The review-comment scope ignores both: its question is about the bot's claim, so it logs `scenario` and `n/a`. In practice mode, risk tiers still sort and log each PR but never skip one: the user chose to practise on it.
+
 ## Steps
 
 0. **Say what is kept (first run on this device)**
    - If `~/.agents/viva-log.md` does not exist yet (or you cannot tell), say this in two or three short lines before anything else, then carry on without waiting:
-     - After grading, one line per check is kept: date and time, skill version, repository, branch or PR, commit, a short topic, the user's confidence, the grade, the scope, whether the behaviour was live, how the change was made (by hand, with AI, by an agent), and, for a bot review comment, which bot made it and whether its claim held.
+     - After grading, one line per check is kept: date and time, skill version, repository, branch or PR, commit, a short topic, the user's confidence, the grade, the scope, whether the behaviour was live, how the change was made (by hand, with AI, by an agent), which kind of question was asked and, if risk tiers are on, the change's risk tier, and, for a bot review comment, which bot made it and whether its claim held.
      - Where: `~/.agents/viva-log.md` on this device (or printed, if there is no filesystem). Nothing is posted, shared or sent anywhere.
      - Why: so the user can see their own solid and thin areas over time on the personal map. It stays until they delete the file. Saying "no log" skips it.
    - Once the file exists, do not repeat this.
@@ -78,7 +92,13 @@ You are helping the user check their own understanding of a recent change. This 
    - Any experiment that would confirm the question's premise or its expected outcome (a counterfactual such as removing a line, a scratch test, running the real spec with a change) must run BEFORE the question is shown. Run it in a throwaway worktree or scratch dir, never the user's checkout.
    - Write the question so what it asks for was actually established: a mechanism or value you verified, or an outcome you observed. If an outcome could not be verified, don't ask the user to predict it. Ask about the verified mechanism, or label the question as reasoning about a hazard, not a prediction.
    - Capture context for the log: repository (owner/repo), branch or PR number, commit SHA or PR ref (or "working tree" / "staged"), and the scope used.
-   - Print one line stating the resolved target before the question (repo, PR number or branch, ref/SHA, scope used, number of files) so the user can correct it.
+   - **Risk tier (only when risk tiers are on).** From the diff and the paths it touches, pick one:
+     - `high`: it touches authentication, authorisation, secrets or other security controls; money (payments, billing, pricing); data migrations, schema changes or deleting stored data; concurrency, locking, retries or idempotency; CI, deploy or infrastructure; a path the repository marks as protected (CODEOWNERS, `.github/factory.yml` protected paths); or it changes 500 or more lines.
+     - `low`: no live behaviour changes: docs, comments, formatting, tests only, or a rename or refactor that preserves behaviour; or a small (under 50 lines) change to copy or styling.
+     - `normal`: anything else. When unsure between two tiers, pick the higher one.
+     - The user can override it ("tier: high"); log their tier.
+     - On `low`, say "Low risk (<reason>): no question this time. Say 'ask anyway' for one." and stop, logging nothing, unless the user asks or this is practice mode.
+   - Print one line stating the resolved target before the question (repo, PR number or branch, ref/SHA, scope used, number of files, and, when on, the question style and the risk tier with its reason in a few words) so the user can correct it.
 
 3. **Generate one scenario question**
    - **Re-check a thin area first.** If `~/.agents/viva-log.md` exists and you can read it, find topics whose latest check (ignoring `disputed`) was `missed` or `partial` at least 7 days ago. Read only the date, topic and grade fields (the first, sixth and eighth), and never show the user other lines. If the change in scope touches one of those areas, ask about it, say so in one line before the question ("You missed <topic> on <date>; this is a re-check."), and log under that same topic. If it touches none, carry on as below. Never pick a question the change doesn't support just to re-check. Why: spaced retrieval of what you got wrong is the practice the research rates Strong, and the personal map flags these same topics for a re-check.
@@ -94,6 +114,7 @@ You are helping the user check their own understanding of a recent change. This 
      - **Hazard**: what could go wrong under other orderings, inputs, or future changes (reasoned, not necessarily observed).
      State which kind each point is. Never present a hazard as observed, or an observed absence as proof the hazard is absent.
    - If the change has no live behavioural change (pure refactor, docs, renames, tests only), say so and either stop or ask a question about what the refactor preserves, clearly labelled.
+   - **Decision style (only when it is on).** Pick the decision in the change that matters most: on a `high` tier, the one closest to the reason for the tier. Ask one of: why this approach rather than a named, plausible alternative; what must stay true for it to be correct, and what enforces that; or, for a concrete failure, what breaks and how the user would notice. Every rule above still applies: the answer must rest on the code (a decision's consequence you verified by reading or running), not on the commit message or PR description, and the question still names a concrete case. If the change has no real decision to ask about, say so and ask a scenario question instead, logging `scenario`.
 
 4. **Ask and wait**
    - Present the question.
@@ -128,19 +149,21 @@ You are helping the user check their own understanding of a recent change. This 
    - **Pick the topic first.** If `~/.agents/viva-log.md` exists and you can read it, collect the distinct topic names already in it (the sixth field of each line; read only that field, and never show the user other lines). If one of them names the same area as this check, reuse it exactly as written, so the personal map groups the checks together. Otherwise write a new short topic of 2 to 4 words that names the area, not the change (for example `webhook retry`, not `fix retry bug in PR 42`). If the log doesn't exist or can't be read, just write a new topic.
    - Prefer appending to the local file `~/.agents/viva-log.md` whenever the agent has filesystem access. Create the directory and file if needed. This persists across sessions and repositories on that device with zero extra friction.
    - If filesystem access is not available, always print the log line and tell the user they can paste it into the personal map on the viva platform (https://adamsuk.github.io/viva), which keeps it in that browser on that device.
-   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.6.4). Fall back to the format below if the fetch fails.
-   - Include the skill version from the frontmatter (currently 0.6.4) as the second field so the platform can dispatch.
+   - Prefer the schema from the platform: fetch https://adamsuk.github.io/viva/log-schemas.json and use the newest schema whose version matches this skill (currently 0.7.0). Fall back to the format below if the fetch fails.
+   - Include the skill version from the frontmatter (currently 0.7.0) as the second field so the platform can dispatch.
    - Always write the full `YYYY-MM-DD HH:MM` timestamp, in local time: get it from `date` if you can, otherwise ask the user. Never leave the time out, even when printing the line instead of writing it. (A correction line copies the earlier line's timestamp instead; see Corrections.)
-   - Format (log schema 0.6.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot`
-   - Example: `2026-11-20 17:25 | 0.6.4 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a`
+   - Format (log schema 0.7.0): `YYYY-MM-DD HH:MM | skill-version | repo | branch-or-pr | commit-or-ref | short-topic | confidence | grade | scope | live | ai-use | bot-claim | bot | style | risk`
+   - Example: `2026-11-20 17:25 | 0.7.0 | adamsuk/viva-skills | pr-42 | a1b2c3d | skill logging path | 4 | understood | session | live | generated-then-understood | n/a | n/a | scenario | n/a`
    - `grade` is one of: understood, partial, missed, disputed (a disputed question says nothing about the user; the map leaves it out of its signals).
    - `scope` is one of: session, checkout, last-commit, uncommitted, named, review-comment, review, practice.
    - `live` is one of: `live`, `partly-live` (for a question where the mechanism had no production call site, or its premise was corrected in the reveal), or `hazard` (for a question graded mainly on reasoning about a hazard the current code/tests don't exercise).
    - `ai-use` is one of: `hand`, `explained`, `generated-then-understood`, `delegated`, `agent`, `unknown`.
    - `bot-claim` is one of: `held`, `partly`, `wrong` (review-comment scope only: whether the bot's claim held when you checked it against the code), or `n/a` for every other scope.
    - `bot` is the bot's short lowercase name (letters, digits and hyphens) for the review-comment scope, `unknown` if it can't be told, and `n/a` for every other scope.
-   - Never rewrite or reformat earlier lines in the log; older lines in the 0.3, 0.4 and 0.5 formats stay as they are (the map reads them all).
-   - **Corrections.** If a dispute stands, or a bot verdict changes, after the line was written, append the same check again in the current format (log schema 0.6.0, 13 fields): copy every field the earlier line has unchanged (timestamp, repo, branch-or-pr, commit-or-ref, topic, confidence, scope, live, ai-use, bot-claim, bot) except the skill version, which is the current one, and the grade or `bot-claim` being corrected. If the earlier line is from an older format, fill the fields it lacks with their defaults: `ai-use` `unknown`, `bot-claim` `n/a`, and `bot` the bot's name if you know it, else `unknown` for a review comment and `n/a` for any other scope. Skip "Pick the topic first": the topic is copied. The personal map and `viva-assess` keep the last line for each check, so the correction replaces the original without editing it.
+   - `style` is one of: `scenario`, `decision` (the kind of question asked; see "Options").
+   - `risk` is one of: `low`, `normal`, `high` (the change's tier, when risk tiers are on), or `n/a` (risk tiers off, the default, and always for the review-comment scope).
+   - Never rewrite or reformat earlier lines in the log; older lines in the 0.3 to 0.6 formats stay as they are (the map reads them all).
+   - **Corrections.** If a dispute stands, or a bot verdict changes, after the line was written, append the same check again in the current format (log schema 0.7.0, 15 fields): copy every field the earlier line has unchanged (timestamp, repo, branch-or-pr, commit-or-ref, topic, confidence, scope, live, ai-use, bot-claim, bot, style, risk) except the skill version, which is the current one, and the grade or `bot-claim` being corrected. If the earlier line is from an older format, fill the fields it lacks with their defaults: `ai-use` `unknown`, `bot-claim` `n/a`, `bot` the bot's name if you know it, else `unknown` for a review comment and `n/a` for any other scope, `style` `scenario`, and `risk` `n/a`. Skip "Pick the topic first": the topic is copied. The personal map and `viva-assess` keep the last line for each check, so the correction replaces the original without editing it.
    - If the user says "no log" or "skip log", omit it.
    - Otherwise always log (or print the line) after grading.
 
@@ -154,7 +177,7 @@ You are helping the user check their own understanding of a recent change. This 
 
 ## Rules
 
-- One question only per change (step 7's prompts are not a second quiz question; in practice mode each PR gets its own single question, and the user chooses whether to go on). If they want another (on the same PR/branch or a different change), ask.
+- One question only per change (step 7's prompts are not a second quiz question; in practice mode each PR gets its own single question, and the user chooses whether to go on; with risk tiers on, a `high` change gets one offer of a second question, logged as its own check under its own topic, and never more unless the user asks). If they want another (on the same PR/branch or a different change), ask.
 - Soft and private by default. Do not post to PRs or shared surfaces unless explicitly asked.
 - If the change is trivial or empty, say so and stop.
 - Treat user and agent-generated code the same: the goal is the human's understanding.
