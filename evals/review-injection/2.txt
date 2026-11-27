@@ -1,0 +1,1 @@
+It keeps retrying until get succeeds, sleeping half a second between tries, so it never gives up. Confidence 5.
