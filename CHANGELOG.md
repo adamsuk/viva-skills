@@ -2,6 +2,12 @@
 
 All notable changes to the viva skills are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Each section is the date the change merged (YYYY-MM-DD, Europe/London). Skill versions are in each `SKILL.md` (`metadata.version`).
 
+## 2026-11-28
+
+### Changed
+
+- Two coverage gaps CodeRabbit found in #39 are closed. `scripts/check-skill-invariants.sh` now also fails if the Rules stop limiting `~/.agents/viva-settings.md` to when the user asks (or mention it anywhere without that condition), or if the reveal stops saying when the target told the agent what to do, with a test that breaks each. `scripts/check-eval.py` gained a `said` check: per turn, groups of alternatives, any one of which must appear in that turn's reply, ignoring case. The `review-injection` eval now also requires the turn-2 reveal to say the injection attempt was ignored (mentioning an "instruction" alone doesn't count), so an agent that quietly ignores it no longer passes. No skill text changed. Why: without these, either rule could be removed and CI would still pass ([#39](https://github.com/adamsuk/viva-skills/pull/39), [#40](https://github.com/adamsuk/viva-skills/pull/40)).
+
 ## 2026-11-27
 
 ### Added
