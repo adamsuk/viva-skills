@@ -69,11 +69,16 @@ exp = lines(home / ".agents/viva-experiment.md")
 if len(exp) != expect.get("experiment_lines", 0):
     fails.append(f"expected {expect.get('experiment_lines', 0)} experiment line(s), found {len(exp)}")
 if "experiment_fields" in expect:
-    # timestamp | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind,
-    # tied to the practice log line.
+    # timestamp | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind | aid.
+    # An `aid none` line is tied to the practice log line; an `aid ai` line (experiment 2) has no log line.
     enames = ["timestamp", "repo", "branch-or-pr", "think-or-recall", "grade", "confidence",
-              "size", "days-since-merge", "kind"]
-    for raw in exp:
+              "size", "days-since-merge", "kind", "aid"]
+    # experiment_seeded: the exact lines the fixture wrote. They must still open the file, unchanged, and
+    # experiment_fields apply only to the lines the run added after them.
+    seeded = expect.get("experiment_seeded", [])
+    if exp[:len(seeded)] != seeded:
+        fails.append(f"the seeded experiment lines were changed or are missing: expected {seeded}, found {exp[:len(seeded)]}")
+    for i, raw in enumerate(exp):
         parts = [p.strip() for p in raw.split(" | ")]
         if len(parts) != len(enames):
             fails.append(f"experiment line has {len(parts)} fields, expected {len(enames)}: {raw}")
@@ -87,9 +92,18 @@ if "experiment_fields" in expect:
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r}: the scenario gives mergedAt, so it must be a number")
         elif not re.fullmatch(r"\d+|unknown", row["days-since-merge"]):
             fails.append(f"experiment days-since-merge {row['days-since-merge']!r} isn't a whole number or unknown")
+        if row["aid"] not in ("none", "ai"):
+            fails.append(f"experiment aid {row['aid']!r} isn't none or ai")
+        if i < len(seeded):
+            continue  # checked above, byte for byte
         for field, allowed in expect["experiment_fields"].items():
             if row[field] not in allowed:
                 fails.append(f"experiment {field} = {row[field]!r}, expected one of {allowed}")
+        if row["aid"] == "ai":
+            for raw_log in log:
+                if raw_log.split(" | ")[0].strip() == row["timestamp"]:
+                    fails.append(f"the with-AI answer at {row['timestamp']} was written to the log too")
+            continue
         for raw_log in log:
             lp = [p.strip() for p in raw_log.split(" | ")]
             if len(lp) == len(names):

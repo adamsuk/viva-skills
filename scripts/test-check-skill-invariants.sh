@@ -55,6 +55,12 @@ broken "a style the platform doesn't document" viva/SKILL.md \
 broken "a bare PR-description trigger" viva/SKILL.md \
   's.replace("help me write my PR description in my own words", "write my PR description")' \
   "would start a quiz"
+broken "a with-AI pass that logs its answers" viva/SKILL.md \
+  's.replace("Write nothing to `~/.agents/viva-log.md` for this pass", "Log this pass to `~/.agents/viva-log.md` as usual")' \
+  "doesn't keep its answers out of the log"
+broken "a with-AI pass that lets this conversation answer" viva/SKILL.md \
+  's.replace("but not this conversation,", "including this one,")' \
+  "doesn't rule out this conversation"
 broken "practice diffing a merged PR against merge-base" viva/SKILL.md \
   's.replace("Never diff against `git merge-base`", "Diff against `git merge-base`")' \
   "doesn't forbid diffing against merge-base"

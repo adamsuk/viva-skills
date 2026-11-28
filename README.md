@@ -12,7 +12,7 @@ Skills follow the open standard (SKILL.md with YAML frontmatter) and work across
   - **Before you approve**: reviewing someone else's or an agent's PR? Ask for one question on it first; anything you couldn't explain is worth asking the author about before approving. Logged with scope `review`.
   - **Re-checks what you missed**: when your log shows a topic you missed a week or more ago and the change touches it, the question is a re-check on that area.
   - **Before you post**: optionally helps you write the PR description in your own words (why, what, and the decision you're least sure of) and suggests an `Assisted-by` trailer from how the change was made. Nothing is posted or committed without you.
-  - **Practice mode**: `/viva practice [N]` works through your own past merged PRs one at a time, one question each, and asks whether you had to think or just recalled. The answer goes to a separate local file, `~/.agents/viva-experiment.md`, for Viva's experiment 1, with the PR's rough size (S, M, L), days since merge and the kind of change (no file names or code). `/viva practice fill` adds those to earlier lines. `viva-assess` summarises it.
+  - **Practice mode**: `/viva practice [N]` works through your own past merged PRs one at a time, one question each, and asks whether you had to think or just recalled. The answer goes to a separate local file, `~/.agents/viva-experiment.md`, for Viva's experiment 1, with the PR's rough size (S, M, L), days since merge and the kind of change (no file names or code). `/viva practice fill` adds those to earlier lines. `/viva practice with-ai` is a second pass for experiment 2: a new question on PRs you already practised, answered with your usual AI open in another window; it goes only to the experiment file, never the log, so the map shows only your own answers. `viva-assess` summarises both.
   - **Options to compare** (off by default): `/viva decision` asks about a decision in the change (why this approach, what must stay true, what breaks if it is wrong) instead of a scenario. `/viva tiered` sorts the change into low, normal or high risk: low gets no question unless you say "ask anyway", high gets the offer of a second question. To keep either on, put `style: decision` or `risk-tiers: on` in `~/.agents/viva-settings.md`. Neither is backed by evidence yet, so each check logs which it used, for Viva's experiment 8.
   - **How the change was made**: it records `ai-use` (by hand, asked AI why, generated then understood, delegated, built by an agent) so the map can show whether how you use AI tracks your understanding.
 - **viva-assess** — Interpret and assess multiple answers or a log excerpt. Flags confident-wrong cases, thin topics, and suggests next practice steps. Leaves disputed checks out, compares grades by how the change was made, says whether your sure answers were understood more often than unsure ones, and flags it when your latest checks slipped against earlier ones.
@@ -57,8 +57,8 @@ These skills can be served over MCP using the Skills extension (SEP-2640) or a h
 ### Versioning
 
 - Each skill has its own `metadata.version` in its SKILL.md. The log line a skill writes carries that version, and the platform's [log-schemas.json](https://adamsuk.github.io/viva/log-schemas.json) says which skill versions each log format covers.
-- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.6.4`).
-- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.6.4` (if your CLI supports `--ref`), or clone that tag.
+- The repository release version is in `VERSION`. Each release is tagged `v<VERSION>` on `main` (for example `v0.7.2`).
+- To pin a release: `npx skills add adamsuk/viva-skills --skill viva --ref v0.7.2` (if your CLI supports `--ref`), or clone that tag.
 - Update with `npx skills update viva` or by re-installing.
 
 ### Releasing
