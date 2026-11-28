@@ -3,7 +3,7 @@ name: viva-assess
 description: Interpret and assess multiple viva log entries or answers. Summarise patterns, flag confident-wrong cases, identify thin topics, and suggest next practice steps. Use when the user pastes a viva log, several answers, or asks to review their recent checks.
 license: MIT
 metadata:
-  version: "0.4.4"
+  version: "0.4.5"
   author: adamsuk
   source: https://github.com/adamsuk/viva-skills
 compatibility: Works in Claude Code, Grok, Codex, Cursor, and other Agent Skills compatible agents. Can be exposed over MCP.
@@ -60,10 +60,11 @@ You help the user see patterns across multiple viva answers or a log file. This 
    - Always mention the source (local file, browser map, or paste).
    - **Required:** End the report with this exact sentence (or equivalent that includes the full URL): "You can also open the personal map at https://adamsuk.github.io/viva and drop the same log file (or paste an export) to see the interactive topic view."
 
-4a. **Experiment 1 (only if asked)**
-   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind`; older lines have only the first six fields, so treat the last three as `unknown`). If a repo and PR appear more than once, the last line is a correction: use only that one.
-   - Report the counts of think, recall and mixed (and skips), and how many of the 20 are done (a skipped think-or-recall doesn't count). Leaving `disputed` grades out, give the understood count within each of think, recall and mixed, and say whether the understood rate differs between think and recall, with the counts. Skip any group with fewer than 3. Don't draw a conclusion the numbers don't support: a small sample is a sketch, not a result.
+4a. **Experiments 1 and 2 (only if asked)**
+   - If the user asks about the experiment or their practice runs, read `~/.agents/viva-experiment.md` (one line per practice PR: `date | repo | pr-N | think-or-recall | grade | confidence | size | days-since-merge | kind | aid`; older lines have only the first six fields, so treat `size`, `days-since-merge` and `kind` as `unknown`, and a line without `aid` is `none`). A PR can have one `none` line and one `ai` line, from experiment 2's with-AI pass. If a repo, PR and `aid` appear more than once, the last line is a correction: use only that one.
+   - Experiment 1 uses only the `none` lines. Report the counts of think, recall and mixed (and skips), and how many of the 20 are done (a skipped think-or-recall doesn't count). Leaving `disputed` grades out, give the understood count within each of think, recall and mixed, and say whether the understood rate differs between think and recall, with the counts. Skip any group with fewer than 3. Don't draw a conclusion the numbers don't support: a small sample is a sketch, not a result.
    - Where lines have them, give the understood count (disputed left out) by `size` (S, M, L), by days since merge (under 7, 7 to 30, over 30) and by `kind`, under the same rule of at least 3 per group. Leave `unknown` and `skip` out of these groups and say how many were left out. If older lines lack the fields, say the user can fill them in with "/viva practice fill".
+   - Experiment 2, when there are `ai` lines: pair each PR's `none` and `ai` lines, leaving out pairs where either grade is `disputed`. With 3 or more pairs, report how many pairs had the same grade, a higher grade with the AI open, and a lower one (order: missed, partial, understood), how confidence moved, and how many went from think to recall or the other way. Say plainly that the with-AI pass always came second and used a different question, so a rise can be partly from having seen the PR before. Don't call either way of answering better: the question is how much the AI carried the answer, not which is right to use. With fewer than 3 pairs, give only the count of pairs so far.
    - Offer to format it as a row for the Log table in Viva's EXPERIMENTS.md, but don't post or commit it.
 
 5. **Stay private**

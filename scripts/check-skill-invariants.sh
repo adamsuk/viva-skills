@@ -98,6 +98,12 @@ if viva:
         need(re.search(r"(never|don't|do not)\W.{0,40}merge-base", pm.group(0), re.I), "viva: practice mode doesn't forbid diffing against merge-base")
         need("viva-experiment.md" in pm.group(0), "viva: practice mode doesn't name its experiment file")
         need(re.search(r"append.{0,30}correct", pm.group(0), re.I), "viva: practice mode has no correction rule for the experiment file")
+        # Experiment 2: answers given with an AI open stay out of the log the map reads.
+        wa = re.search(r"\*\*With an AI open\*\*.*?(?=\n   - \*\*Fill in)", pm.group(0), re.S)
+        need(wa, "viva: practice mode has no with-AI pass")
+        if wa:
+            need(re.search(r"(write nothing|never write|don't write|do not write)\W.{0,20}viva-log\.md", wa.group(0), re.I), "viva: the with-AI pass doesn't keep its answers out of the log")
+            need(re.search(r"not this conversation", wa.group(0)), "viva: the with-AI pass doesn't rule out this conversation as the AI")
     # 7. Every scope the step-1 list offers is one the log line accepts, and the other way round.
     if "scope" in declared:
         step1 = re.search(r"^1\. \*\*Pick the scope\*\*\n(.*?)(?=^2\. )", viva, re.M | re.S)
